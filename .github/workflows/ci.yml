@@ -2,45 +2,88 @@ name: TENSORGRAPH CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
-  build:
+  recovery-gate:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.13"]
+        python-version: ["3.10", "3.13"]
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-        cache: 'pip'
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e ".[dev,fx]"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev,fx]"
 
-    - name: Lint with Ruff
-      run: |
-        # Stop the build if there are Python syntax errors or undefined names
-        # Then exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        ruff check tensorgraph tests
+      - name: Compile Python sources
+        run: python -m compileall -q tensorgraph tests examples benchmarks/bench_verified_elementwise.py
 
-    - name: Type check with Mypy
-      run: |
-        mypy tensorgraph
+      - name: Lint recovery surface
+        run: |
+          ruff check \
+            tensorgraph/signature.py \
+            tensorgraph/ir/primitives.py \
+            tensorgraph/egraph/egraph.py \
+            tensorgraph/egraph/saturation.py \
+            tensorgraph/dist \
+            tensorgraph/pipeline \
+            tests/test_recovery_semantics.py \
+            tests/test_verified_pipeline.py \
+            benchmarks/bench_verified_elementwise.py \
+            scripts/check_evidence_claims.py
 
-    - name: Run Tests
-      run: |
-        pytest tests -v --cov=tensorgraph
+      - name: Type check recovery surface
+        if: matrix.python-version == '3.10'
+        run: |
+          mypy \
+            tensorgraph/signature.py \
+            tensorgraph/ir/primitives.py \
+            tensorgraph/egraph/egraph.py \
+            tensorgraph/egraph/saturation.py \
+            tensorgraph/dist \
+            tensorgraph/pipeline
 
-    - name: Run Saturation Benchmark
-      run: |
-        python benchmarks/bench_saturation.py
+      - name: Enforce evidence and claim policy
+        run: python scripts/check_evidence_claims.py
+
+      - name: Run full unit suite
+        run: pytest tests -v --cov=tensorgraph
+
+      - name: Run saturation smoke benchmark
+        run: python benchmarks/bench_saturation.py
+
+  gpu-evidence-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify GPU benchmark fails closed without CUDA
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev,fx]"
+          set +e
+          python benchmarks/bench_verified_elementwise.py --sizes 16 --warmup 0 --repetitions 1 --output /tmp/evidence.json
+          status=$?
+          set -e
+          test "$status" -ne 0
+          test ! -e /tmp/evidence.json
