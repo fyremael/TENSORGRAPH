@@ -4,7 +4,7 @@ import inspect
 from collections.abc import Callable, Sequence
 from typing import cast
 
-from ..rewrite.pattern import PBox, PIter, PPar, PSeq, Pattern, ematch_at
+from ..rewrite.pattern import Pattern, PBox, PIter, PPar, PSeq, ematch_at
 from ..rewrite.rule import Rewrite, instantiate_pattern
 from .egraph import EGraph
 from .trace import Trace
@@ -51,7 +51,7 @@ def saturate(
 
             for enode in eg.nodes[representative]:
                 key = f"Box:{enode.data[0]}" if enode.tag == "Box" else enode.tag
-                for rewrite in rules_by_head.get(key, ()):  # type: ignore[arg-type]
+                for rewrite in rules_by_head.get(key, []):
                     if id(rewrite) not in seen_rules:
                         candidates.append(rewrite)
                         seen_rules.add(id(rewrite))
