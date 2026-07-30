@@ -1,347 +1,169 @@
-# TENSORGRAPH: Diagrammatic Rewriting Compiler
+# TENSORGRAPH
 
-<div align="center">
+TENSORGRAPH is a research compiler for typed diagram intermediate representations, equality saturation, extraction, and bounded GPU lowering.
 
-![TENSORGRAPH](docs/assets/tensorgraph_architecture.png)
+The repository is in an evidence-recovery phase. It contains a useful compiler core, but it is not represented as production-ready. Capability claims are limited to behavior covered by committed tests or reproducible evidence records.
 
-</div>
+See:
 
-<div align="center">
+- [STATUS.md](STATUS.md) for the machine-oriented capability ledger.
+- [docs/SEMANTICS.md](docs/SEMANTICS.md) for the categorical and effect assumptions.
+- [docs/EVIDENCE_POLICY.md](docs/EVIDENCE_POLICY.md) for benchmark and audit admission rules.
 
-[![GCT Frontier Engineering](https://img.shields.io/badge/GCT-Frontier%20Engineering-050505?style=for-the-badge&labelColor=0a0a0a&color=00F0FF)](https://www.grandchallenge.io)
-[![Status](https://img.shields.io/badge/Status-Operational-00ff66?style=for-the-badge)](https://github.com/gct/tensorgraph)
-[![License](https://img.shields.io/badge/License-MIT-A0A0A0?style=for-the-badge)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+## Current supported surface
 
-</div>
+The supported research surface is deliberately narrow:
 
-*Transform programs through equality saturation on string diagrams*
+1. Construct typed expressions from `Id`, `Box`, `Seq`, `Par`, and selected structural primitives.
+2. Admit expressions into a typed e-graph.
+3. Apply typed rewrites under bounded equality saturation.
+4. Extract a lower-cost representative.
+5. Lower a bounded unary elementwise chain to generated Triton source.
+6. On a CUDA/Triton host, compile and execute that generated kernel and compare it with the PyTorch source model.
 
-
-</div>
-
----
-
-## What is TENSORGRAPH?
-
-TENSORGRAPH represents programs as **typed string diagrams** and optimizes them through **equality saturation** on an **e-graph**. Instead of applying transformations one-by-one, it explores *all equivalent programs simultaneously* and extracts the cheapest one.
-
-```mermaid
-graph LR
-    style P fill:#0a0a0a,stroke:#333,stroke-width:2px,color:#fff
-    style S fill:#0f1a20,stroke:#00f0ff,stroke-width:2px,color:#00f0ff
-    style E fill:#1a1005,stroke:#ff9900,stroke-width:2px,color:#ff9900
-
-    P[Program<br/>(Diagram)] -->|Add| S{Saturate<br/>(E-Graph)}
-    S -- Rules --> S
-    S -->|Extract| E[Optimal<br/>(Term)]
-```
-
-**Key concepts:**
-- **Objects** — Types representing system interfaces
-- **1-Morphisms** — Typed diagrams (`Id`, `Box`, `Seq`, `Par`)
-- **2-Morphisms** — Rewrite rules defining equivalences
-- **E-Graph** — Compact representation of all equivalent programs
-- **Extraction** — Cost-based selection of optimal program
-
----
+Other modules are experimental, partial, or retained for investigation. The status ledger is authoritative.
 
 ## Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-org/TENSORGRAPH.git
+git clone https://github.com/fyremael/TENSORGRAPH.git
 cd TENSORGRAPH
-
-# Install with dev dependencies
-pip install -e ".[dev]"
-
-# Verify installation
-python -m tensorgraph.examples.demo_core
+python -m pip install -e ".[dev,fx]"
 ```
 
-**Requirements:** Python ≥ 3.10
-
-**Optional:** PyTorch ≥ 2.0 for the FX backend (`pip install -e ".[fx]"`)
-
----
-
-## Quick Start
-
-### 30 Seconds: See it Work
+For generated-kernel execution on Linux with a compatible NVIDIA GPU:
 
 ```bash
-python -m tensorgraph.examples.demo_core
+python -m pip install -e ".[dev,fx,gpu]"
 ```
 
-**Output:**
-```
-=== LoRA fusion demo (e-graph equality saturation) ===
-Original: ((InjectLoRA(deltas=('A1B1',)) ⊗ Id[X]) ; ((InjectLoRA(deltas=('A2B2',)) ⊗ Id[X]) ; LinearApply))
-Boxes: 3
-Best:   ((InjectLoRA(deltas=('A1B1', 'A2B2')) ⊗ Id[X]) ; LinearApply)
-Boxes:  2
-```
+Python 3.10 through 3.13 is supported by package metadata. The CI matrix is authoritative for versions currently exercised.
 
-Two `InjectLoRA` operations were automatically fused into one!
-
-### 5 Minutes: Build Your First Optimizer
+## Core example
 
 ```python
-from tensorgraph import (
-    Obj, Signature, Box, Seq, pretty,
-    Rewrite, PSeq, PBox, EGraph, saturate, Extractor
-)
+from tensorgraph import Box, EGraph, Extractor, Obj, PBox, PSeq, Rewrite, Seq, Signature, saturate
 
-# 1. Define types
-T = Obj("T")
+T = Obj("Tensor")
 sig = Signature()
-sig.add("f", T, T)
-sig.add("g", T, T)
+sig.add("ReLU", T, T, traits={"elementwise"})
 
-# 2. Build a program
-prog = Seq(Box("f"), Seq(Box("f"), Box("g")))
-print("Before:", pretty(prog))  # (f ; (f ; g))
-
-# 3. Define a rewrite: f ; f ≡ f
-fuse = Rewrite(
-    name="FuseF",
-    lhs=PSeq(PBox("f"), PBox("f")),
-    rhs=PBox("f"),
+expr = Seq(Box("ReLU"), Box("ReLU"))
+rule = Rewrite(
+    name="relu_idempotence",
+    lhs=PSeq(PBox("ReLU"), PBox("ReLU")),
+    rhs=PBox("ReLU"),
+    origin="torch.relu(torch.relu(x)) == torch.relu(x)",
 )
 
-# 4. Optimize
-eg = EGraph(sig)
-root = eg.add_expr(prog)
-saturate(eg, [fuse], iters=10)
+egraph = EGraph(sig)
+root = egraph.add_expr(expr)
+saturate(egraph, [rule], iters=4)
 
-# 5. Extract the best
-ex = Extractor(eg)
-ex.solve(root)
-best = ex.extract(root)
-print("After:", pretty(best))  # (f ; g)
+extractor = Extractor(egraph)
+extractor.solve(root)
+best = extractor.extract(root)
 ```
 
----
+## Verified vertical slice
 
-## Documentation
+The recovery path adds a bounded compiler pipeline for unary elementwise PyTorch modules:
 
-| Document | Purpose |
-|----------|---------|
-| **[CONCEPTS.md](docs/CONCEPTS.md)** | Mental model, intuition pumps, visual diagrams |
-| **[TUTORIAL.md](docs/TUTORIAL.md)** | Step-by-step hands-on guide |
-| **[API.md](docs/API.md)** | Complete reference for every symbol |
-| **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** | Internals deep-dive for contributors |
-| **[SPEC.md](SPEC.md)** | Formal specification |
-| **[CONTRIBUTING.md](CONTRIBUTING.md)** | Development workflow |
-
----
-
-## Core Features
-
-### Typed String Diagrams
-
-Programs are represented as composable, typed diagrams:
-
-```python
-from tensorgraph import Obj, Box, Seq, Par, Id
-
-Tensor = Obj("Tensor")
-Latent = Obj("Latent")
-
-# Sequential: encode → transform → decode
-pipeline = Seq(Box("Encode"), Seq(Box("Transform"), Box("Decode")))
-
-# Parallel: two encoders side-by-side
-dual = Par(Box("Encode"), Box("Encode"))
-
-# Type-checked composition
-# Seq(Box("Decode"), Box("Encode"))  # TypeError if types don't match!
+```text
+PyTorch FX capture
+→ typed TENSORGRAPH expression
+→ bounded equality saturation
+→ extraction
+→ generated Triton source
+→ CUDA/Triton compilation and execution
+→ differential comparison with PyTorch
 ```
 
-### Pattern-Based Rewriting
-
-Define equivalences with pattern matching:
-
-```python
-from tensorgraph import Rewrite, PSeq, PVar, PBox
-
-# Associativity: (a ; b) ; c ≡ a ; (b ; c)
-assoc = Rewrite(
-    name="Assoc",
-    lhs=PSeq(PSeq(PVar("a"), PVar("b")), PVar("c")),
-    rhs=PSeq(PVar("a"), PSeq(PVar("b"), PVar("c"))),
-)
-
-# Fusion: expensive ; expensive ≡ expensive
-fuse = Rewrite(
-    name="Fuse",
-    lhs=PSeq(PBox("Expensive"), PBox("Expensive")),
-    rhs=PBox("Expensive"),
-)
-```
-
-### Automated Kernel Fusion
-
-TENSORGRAPH v0.4.0+ automatically fuses sequential and parallel operations into optimized GPU kernels.
-
-```python
-from tensorgraph.codegen.triton import TritonEmitter
-from tensorgraph.codegen.cuda import CUDAEmitter
-
-# Fuse Seq(ReLU, Sigmoid) into single kernel
-expr = Seq(Box("ReLU"), Box("Sigmoid"))
-emitter = TritonEmitter(sig)
-kernel_code = emitter.emit(expr)
-```
-
-### Distributed Sharding
-
-Scale optimization across nodes with the **AETHER Coordination Fabric**.
-
-```python
-from tensorgraph.dist.sharding import Shard
-from tensorgraph.dist.fabric import create_fabric
-
-# Create an asynchronous distributed fabric
-fabric = create_fabric("async", batch_size=100)
-fabric.start()
-
-shard = Shard(shard_id=1, fabric=fabric, sig=sig)
-# ... distributed equality propagation is automatic!
-```
-
-### Neural Heuristics (`tensorgraph.neural`)
-
-Experimental support for learned rule scheduling:
-
-```python
-from tensorgraph.neural import GNNStateEmbedder, PolicyNetwork, NeuralScheduler
-
-# Use learned policy to guide saturation
-scheduler = NeuralScheduler(
-    policy_net=PolicyNetwork(),
-    embedder=GNNStateEmbedder(),
-    mode="hybrid"  # Mix of privacy and exploration
-)
-trace = scheduler.saturate(egraph, rules)
-```
-
-### Interactive Explorer
-
-TENSORGRAPH includes a high-fidelity visualization tool for debugging saturation:
+Run the CPU-available structural tests:
 
 ```bash
-# Start the WebSocket server and saturation demo
-python showcase/demo_self_contained.py
+pytest tests/test_recovery_semantics.py tests/test_verified_pipeline.py -v
 ```
 
-Then open `showcase/egraph_explorer.html` to see:
-- **Optimization Timeline**: Step-by-step replay
-- **Visual E-Graph**: Force-directed layout of e-classes
-- **Inspector**: Deep dive into equivalent terms
-
----
-
-## Project Status
-
-| Component | Version | Status |
-|-----------|---------|--------|
-| Typed IR | v0.1.0 | ✅ Complete |
-| E-Graph Engine | v0.2.0 | ✅ Complete |
-| Neural Heuristics | v0.3.0 | ✅ Beta |
-| Dynamic Control Flow | v0.4.0 | ✅ Complete |
-| Heterogeneous Sharding | v0.4.0 | ✅ Complete |
-| Triton Codegen | v0.4.0 | ✅ Complete |
-| CUDA Backend | v0.5.0 | ✅ Complete |
-| Performance Suite | v0.5.0 | ✅ Complete |
-| Production Fabric | v0.5.0 | ✅ Complete |
-
-**SPEC.md Compliance:** 100% (13/13 functional sections)
-
----
-
-## Performance & Scaling
-
-TENSORGRAPH v0.5.0 includes a formal **Performance Regression Suite** to ensure optimization and codegen latency remains within bounded limits.
+Run the generated-kernel differential benchmark on a CUDA/Triton host:
 
 ```bash
-# Run the CI-grade regression suite
-python -m tensorgraph.benchmarks.regression --ci
+python benchmarks/bench_verified_elementwise.py \
+  --sizes 1024 65536 1048576 \
+  --warmup 25 \
+  --repetitions 100 \
+  --output artifacts/verified-elementwise.json
 ```
 
----
+The benchmark exits unsuccessfully if generated TENSORGRAPH code is not executed, numerical comparison fails, required metadata is missing, or the host lacks CUDA/Triton. It does not substitute estimated values.
+
+## Semantics
+
+TENSORGRAPH distinguishes structural syntax from semantic permission.
+
+- Sequential and parallel composition are typed.
+- `Swap` belongs to the symmetric monoidal structure.
+- `Dup` and `Del` represent Cartesian copying and discarding.
+- Copy/delete naturality is valid only for pure morphisms.
+- Operations marked with the `effectful` trait do not receive copy/delete naturality rewrites.
+- `Case` branches must have the required unit-domain and common-codomain shape.
+- `Iter` is restricted to non-negative, statically known endomorphism counts.
+
+These rules are enforced in the e-graph admission path and documented in [docs/SEMANTICS.md](docs/SEMANTICS.md).
+
+## Evidence rules
+
+A performance or compliance claim is admissible only when the repository contains:
+
+- the exact commit identity;
+- the command used;
+- dependency and hardware metadata;
+- raw samples or complete pass/fail records;
+- a clear distinction between capture, saturation, extraction, compilation, and execution time;
+- direct execution of generated TENSORGRAPH output;
+- numerical error measurements against an identified reference.
+
+Synthetic multipliers, handwritten substitute kernels, self-comparisons, and machine-local image links are prohibited as evidence. Historical reports that do not meet these requirements are non-authoritative.
+
+## Project status
+
+| Component | Status | Admission basis |
+|---|---|---|
+| Typed expression IR | research-supported | unit tests |
+| Typed e-graph and extraction | research-supported | unit tests |
+| Bounded equality saturation | research-supported | unit tests and trace records |
+| FX unary elementwise capture | bounded experimental | differential tests |
+| Generated Triton unary chain | bounded experimental | source checks plus optional GPU execution |
+| General FX DAG round trip | experimental | incomplete semantic metadata |
+| Reductions | experimental | not admitted for general production use |
+| CUDA C++ emitter | experimental | source generation only |
+| Distributed saturation | scaffold | incomplete workers and synchronization |
+| Neural scheduling | experimental | no production claim |
+| Production readiness | not established | prohibited claim until promoted by evidence gates |
+
+The detailed ledger in [STATUS.md](STATUS.md) controls over this summary.
 
 ## Development
 
 ```bash
-# Install dev dependencies
-pip install -e ".[dev]"
-
-# Run tests
-python -m pytest tests -v
-
-# Lint & type check
-python -m ruff check tensorgraph tests
+python -m ruff check tensorgraph tests benchmarks
 python -m mypy tensorgraph
-
-# Run demos
-python -m tensorgraph.examples.demo_core
-python -m tensorgraph.cli.optimize_fx --in-dim 16 --out-dim 8
+python -m pytest tests -v --cov=tensorgraph
+python benchmarks/bench_saturation.py
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development workflow.
+GPU evidence is a separate, explicitly marked job because standard GitHub-hosted Linux runners do not provide the required NVIDIA execution environment.
 
----
+## Repository policy
 
-## Architecture Overview
+Changes that alter semantics, code generation, or benchmark claims require:
 
-```
-tensorgraph/
-├── types.py          # Obj, Sort
-├── signature.py      # Operation registry
-├── ir/               # Expression IR (Id, Box, Seq, Par)
-├── rewrite/          # Patterns, rules, matching
-├── egraph/           # E-graph, saturation, extraction, tracing
-├── backends/         # torch.fx integration
-└── cli/              # Command-line tools
-```
-
-See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full deep-dive.
-
----
-
-## Why E-Graphs?
-
-Traditional optimizers apply transformations **sequentially**, making irrevocable decisions at each step. This leads to:
-- **Phase ordering problems** — Optimization order matters
-- **Local minima** — Greedy choices miss global optima
-- **Brittleness** — Small changes break patterns
-
-E-graphs solve this by **deferring decisions**:
-1. **Explore all equivalences** — No premature commitment
-2. **Global view** — See all options before choosing
-3. **Composable rules** — Add rules without phase ordering worries
-
----
+1. a falsifiable test;
+2. an update to the capability ledger when status changes;
+3. raw evidence for any performance statement;
+4. review of effect, type, and numerical assumptions;
+5. CI success on the committed revision.
 
 ## License
 
-MIT — See [LICENSE](LICENSE)
-
----
-
-## Acknowledgments
-
-TENSORGRAPH builds on foundational work in:
-- **E-graphs:** [egg](https://egraphs-good.github.io/) and equality saturation
-- **String diagrams:** Categorical compositional semantics
-- **torch.fx:** PyTorch's graph capture and transformation framework
-
----
-
-<div align="center">
-
-*Documentation by Grand Challenge Technologies Ltd. — Frontier Engineering*
-
-</div>
+MIT. See [LICENSE](LICENSE).
