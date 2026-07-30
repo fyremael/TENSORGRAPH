@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+CHECKER = Path(__file__).resolve()
 
 QUARANTINED_REPORTS = [
     "AUDIT_REPORT.md",
@@ -43,6 +44,9 @@ def main() -> int:
             failures.append(f"machine-local file link remains in report: {relative}")
 
     for path in ROOT.rglob("*.py"):
+        resolved = path.resolve()
+        if resolved == CHECKER:
+            continue
         if any(part in {".git", ".venv", "build", "dist"} for part in path.parts):
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
