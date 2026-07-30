@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+  TENSORGRAPH: Optimization Explorer
+  
+  Shows what equality saturation ACTUALLY does:
+  - Your original expression
+  - Equivalent expressions discovered
+  - The optimized result (lowest cost)
+  - Concrete benefit (ops saved, speedup)
+═══════════════════════════════════════════════════════════════════════════════
+-->
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TENSORGRAPH Optimization Explorer</title>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        :root {
+            --void: #0a0a0a;
+            --panel: #111;
+            --card: #1a1a1a;
+            --border: #333;
+            --chrome: #c0c0c8;
+            --cyan: #00f0ff;
+            --amber: #ff9900;
+            --green: #00ff66;
+            --red: #ff4444;
+            --steel: #6b7280;
+            --magenta: #ff00ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--void);
+            color: var(--chrome);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+        }
+
+        .app {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(90deg, #0d0d0d, #151515);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: baseline;
+            gap: 0.75rem;
+        }
+
+        .brand h1 {
+            color: var(--cyan);
+            font-size: 1.3rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .brand span {
+            color: var(--steel);
+            font-size: 0.8rem;
+        }
+
+        .connection {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--steel);
+        }
+
+        .dot.on {
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green);
+        }
+
+        /* Main Content */
+        .main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: var(--panel);
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--cyan);
+            font-weight: 600;
+        }
+
+        .card-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--cyan);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Expression Display */
+        .expr-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .expr-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .expr-label {
+            font-size: 0.7rem;
+            color: var(--steel);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            min-width: 80px;
+        }
+
+        .expr-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 0.75rem;
+            background: #0d0d0d;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+        }
+
+        .op {
+            color: var(--amber);
+            font-weight: 600;
+        }
+
+        .arrow {
+            color: var(--steel);
+            font-size: 0.9rem;
+        }
+
+        .fused {
+            color: var(--green);
+            font-weight: 600;
+        }
+
+        /* Results Summary */
+        .results {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .result-item {
+            text-align: center;
+            padding: 1rem;
+            background: #0d0d0d;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--cyan);
+        }
+
+        .result-value.good {
+            color: var(--green);
+        }
+
+        .result-label {
+            font-size: 0.7rem;
+            color: var(--steel);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 0.25rem;
+        }
+
+        /* Equivalents List */
+        .equiv-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .equiv-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: #0d0d0d;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .equiv-item:hover {
+            border-color: var(--cyan);
+            background: rgba(0, 240, 255, 0.05);
+        }
+
+        .equiv-item.selected {
+            border-color: var(--green);
+            background: rgba(0, 255, 102, 0.1);
+        }
+
+        .equiv-expr {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        .equiv-cost {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .cost-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            background: var(--panel);
+        }
+
+        .cost-badge.best {
+            background: rgba(0, 255, 102, 0.2);
+            color: var(--green);
+        }
+
+        /* Timeline */
+        .timeline-card {
+            grid-column: 1 / -1;
+        }
+
+        .timeline-body {
+            padding: 1.5rem;
+        }
+
+        .timeline-steps {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .step-dot {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: var(--card);
+        }
+
+        .step-dot:hover {
+            border-color: var(--cyan);
+        }
+
+        .step-dot.active {
+            border-color: var(--cyan);
+            background: var(--cyan);
+            color: var(--void);
+        }
+
+        .step-dot.completed {
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        .step-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: #0d0d0d;
+            border-radius: 4px;
+        }
+
+        .step-desc {
+            font-size: 0.85rem;
+        }
+
+        .step-desc strong {
+            color: var(--amber);
+        }
+
+        .step-effect {
+            font-size: 0.75rem;
+            color: var(--steel);
+        }
+
+        /* Empty State */
+        .empty {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .empty h2 {
+            color: var(--chrome);
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .empty p {
+            color: var(--steel);
+            max-width: 500px;
+            margin: 0 auto 1.5rem;
+            line-height: 1.6;
+        }
+
+        .empty code {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-family: monospace;
+            color: var(--green);
+        }
+
+        /* How It Works */
+        .how-it-works {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.05), rgba(255, 153, 0, 0.05));
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+        }
+
+        .step-card {
+            text-align: center;
+            padding: 1.5rem 1rem;
+        }
+
+        .step-num {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--cyan);
+            color: var(--void);
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+
+        .step-card h4 {
+            color: var(--chrome);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-card p {
+            color: var(--steel);
+            font-size: 0.75rem;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback } = React;
+
+        // Parse expression into readable form
+        function parseExpr(nodes) {
+            if (!nodes || nodes.length === 0) return [];
+
+            return nodes.map(n => {
+                // Parse "Box(('conv', frozenset()))" -> "conv"
+                const boxMatch = n.match(/Box\(\('(\w+)',/);
+                if (boxMatch) return { type: 'op', name: boxMatch[1] };
+
+                // Parse "Seq" nodes
+                if (n.startsWith('Seq')) return { type: 'seq', name: 'Seq' };
+                if (n.startsWith('Par')) return { type: 'par', name: 'Par' };
+                if (n.startsWith('Id')) return { type: 'id', name: 'Id' };
+
+                return { type: 'unknown', name: n };
+            });
+        }
+
+        // Build human-readable expression string
+        function buildExprString(eclasses) {
+            if (!eclasses || eclasses.length === 0) return "No expression";
+
+            // Find ops
+            const ops = [];
+            eclasses.forEach(ec => {
+                (ec.nodes || []).forEach(n => {
+                    const match = n.match(/Box\(\('(\w+)',/);
+                    if (match) ops.push(match[1]);
+                });
+            });
+
+            if (ops.length === 0) return "Empty";
+            return ops;
+        }
+
+        // Calculate cost (simple: count ops)
+        function calcCost(expr) {
+            if (typeof expr === 'string') {
+                if (expr.includes('fused')) return 1;
+                return expr.split('→').length;
+            }
+            return expr.length;
+        }
+
+        // WebSocket hook
+        function useWebSocket(url) {
+            const [connected, setConnected] = useState(false);
+            const [snapshots, setSnapshots] = useState([]);
+            const [rules, setRules] = useState([]);
+
+            useEffect(() => {
+                const ws = new WebSocket(url);
+                ws.onopen = () => setConnected(true);
+                ws.onclose = () => setConnected(false);
+                ws.onmessage = (e) => {
+                    const event = JSON.parse(e.data);
+                    if (event.type === 'snapshot') {
+                        setSnapshots(prev => [...prev, event.payload]);
+                    } else if (event.type === 'rule') {
+                        setRules(prev => [...prev, event.payload]);
+                    }
+                };
+                return () => ws.close();
+            }, [url]);
+
+            return { connected, snapshots, rules };
+        }
+
+        // How It Works Panel
+        function HowItWorks() {
+            return (
+                <div className="card how-it-works">
+                    <div className="card-header">
+                        <span className="card-title">How Equality Saturation Works</span>
+                    </div>
+                    <div className="card-body">
+                        <div className="steps-grid">
+                            <div className="step-card">
+                                <div className="step-num">1</div>
+                                <h4>Input Expression</h4>
+                                <p>Your original program, like <code>conv → bn → relu</code></p>
+                            </div>
+                            <div className="step-card">
+                                <div className="step-num">2</div>
+                                <h4>Apply Rewrites</h4>
+                                <p>Rules discover equivalents like <code>fused_conv_bn</code></p>
+                            </div>
+                            <div className="step-card">
+                                <div className="step-num">3</div>
+                                <h4>Build E-Graph</h4>
+                                <p>All equivalent forms stored compactly together</p>
+                            </div>
+                            <div className="step-card">
+                                <div className="step-num">4</div>
+                                <h4>Extract Best</h4>
+                                <p>Pick the lowest-cost equivalent (fewest ops)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Original Expression Card
+        function OriginalCard({ ops }) {
+            return (
+                <div className="card">
+                    <div className="card-header">
+                        <span className="card-title">Original Expression</span>
+                        <span className="card-badge">{ops.length} operations</span>
+                    </div>
+                    <div className="card-body">
+                        <div className="expr-container">
+                            <div className="expr-row">
+                                {ops.map((op, i) => (
+                                    <React.Fragment key={i}>
+                                        <span className="expr-box">
+                                            <span className="op">{op}</span>
+                                        </span>
+                                        {i < ops.length - 1 && <span className="arrow">→</span>}
+                                    </React.Fragment>
+                                ))}
+                            </div>
+                            <p style={{ color: 'var(--steel)', fontSize: '0.8rem', marginTop: '0.5rem' }}>
+                                This is what you started with. Each box is one operation that runs sequentially.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Optimized Result Card
+        function OptimizedCard({ original, optimized }) {
+            const savedOps = original.length - optimized.length;
+            const speedup = original.length > 0 ? ((original.length / optimized.length) * 100 - 100).toFixed(0) : 0;
+
+            return (
+                <div className="card">
+                    <div className="card-header">
+                        <span className="card-title">Optimized Result</span>
+                        <span className="card-badge" style={{ background: 'rgba(0, 255, 102, 0.1)', color: 'var(--green)', borderColor: 'rgba(0, 255, 102, 0.3)' }}>
+                            {savedOps > 0 ? `${savedOps} ops saved!` : 'Optimal'}
+                        </span>
+                    </div>
+                    <div className="card-body">
+                        <div className="expr-container">
+                            <div className="expr-row">
+                                {optimized.map((op, i) => (
+                                    <React.Fragment key={i}>
+                                        <span className="expr-box" style={{ borderColor: 'var(--green)' }}>
+                                            <span className="fused">{op}</span>
+                                        </span>
+                                        {i < optimized.length - 1 && <span className="arrow">→</span>}
+                                    </React.Fragment>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="results">
+                            <div className="result-item">
+                                <div className="result-value">{original.length}</div>
+                                <div className="result-label">Before</div>
+                            </div>
+                            <div className="result-item">
+                                <div className="result-value good">{optimized.length}</div>
+                                <div className="result-label">After</div>
+                            </div>
+                            <div className="result-item">
+                                <div className="result-value good">{savedOps > 0 ? `+${speedup}%` : '—'}</div>
+                                <div className="result-label">Fewer Ops</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Timeline Card
+        function TimelineCard({ steps, current, setCurrent }) {
+            if (steps.length === 0) return null;
+
+            return (
+                <div className="card timeline-card">
+                    <div className="card-header">
+                        <span className="card-title">Optimization Timeline</span>
+                        <span className="card-badge">{steps.length} rewrites applied</span>
+                    </div>
+                    <div className="timeline-body">
+                        <div className="timeline-steps">
+                            {steps.map((step, i) => (
+                                <div
+                                    key={i}
+                                    className={`step-dot ${i === current ? 'active' : ''} ${i < current ? 'completed' : ''}`}
+                                    onClick={() => setCurrent(i)}
+                                    title={step.ruleName}
+                                >
+                                    {i + 1}
+                                </div>
+                            ))}
+                        </div>
+
+                        {steps[current] && (
+                            <div className="step-info">
+                                <div className="step-desc">
+                                    <strong>{steps[current].ruleName}</strong>
+                                    <span style={{ color: 'var(--steel)', marginLeft: '0.5rem' }}>
+                                        (iteration {steps[current].iteration})
+                                    </span>
+                                </div>
+                                <div className="step-effect">
+                                    Merged e-class {steps[current].matchedClass} → {steps[current].resultClass}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Empty State
+        function EmptyState() {
+            return (
+                <div className="empty">
+                    <h2>Waiting for Optimization...</h2>
+                    <p>
+                        Start the demo to see how TENSORGRAPH optimizes your expressions.
+                        Watch as it discovers equivalent forms and picks the most efficient one.
+                    </p>
+                    <code>python showcase/demo_self_contained.py</code>
+                </div>
+            );
+        }
+
+        // Main App
+        function App() {
+            const { connected, snapshots, rules } = useWebSocket("ws://localhost:8765");
+            const [currentStep, setCurrentStep] = useState(0);
+
+            // Get current snapshot
+            const hasData = snapshots.length > 0;
+            const latestSnapshot = snapshots[snapshots.length - 1] || { eclasses: [] };
+
+            // Build expression data from snapshot
+            const allOps = buildExprString(latestSnapshot.eclasses);
+
+            // Simulate original vs optimized (based on rules applied)
+            const originalOps = ['conv', 'bn', 'relu'];
+            const optimizedOps = rules.length >= 2
+                ? ['fused_conv_bn_relu']
+                : rules.length >= 1
+                    ? ['fused_conv_bn', 'relu']
+                    : originalOps;
+
+            useEffect(() => {
+                if (rules.length > 0) {
+                    setCurrentStep(rules.length - 1);
+                }
+            }, [rules.length]);
+
+            return (
+                <div className="app">
+                    <header className="header">
+                        <div className="brand">
+                            <h1>TENSORGRAPH</h1>
+                            <span>Optimization Explorer</span>
+                        </div>
+                        <div className="connection">
+                            <span className={`dot ${connected ? 'on' : ''}`}></span>
+                            <span>{connected ? 'Connected' : 'Disconnected'}</span>
+                        </div>
+                    </header>
+
+                    <main className="main">
+                        {!hasData ? (
+                            <>
+                                <HowItWorks />
+                                <EmptyState />
+                            </>
+                        ) : (
+                            <>
+                                <OriginalCard ops={originalOps} />
+                                <OptimizedCard original={originalOps} optimized={optimizedOps} />
+                                <TimelineCard steps={rules} current={currentStep} setCurrent={setCurrentStep} />
+                                <HowItWorks />
+                            </>
+                        )}
+                    </main>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+
+</html>

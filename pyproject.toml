@@ -1,0 +1,79 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tensorgraph"
+version = "0.4.0-dev"
+description = "TENSORGRAPH: typed string-diagram IR + 2-morphism rewrites + e-graph equality saturation"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Grand Challenge Technologies"}]
+keywords = ["egraph", "rewriting", "optimization", "string-diagrams", "category-theory"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Compilers",
+]
+dependencies = [
+    "fastapi>=0.140.13",
+    "transformers>=5.14.1",
+    "uvicorn>=0.51.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/grandchallengetechnologies/tensorgraph"
+Documentation = "https://github.com/grandchallengetechnologies/tensorgraph/tree/main/docs"
+Changelog = "https://github.com/grandchallengetechnologies/tensorgraph/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.4",
+    "mypy>=1.10",
+]
+fx = [
+    "torch>=2.0",
+]
+
+[project.scripts]
+tensorgraph = "tensorgraph.cli.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tensorgraph*", "tensorgraph*"]
+
+# --- Tool Configurations ---
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM"]
+ignore = [
+    "E402",  # Module level import not at top of file (docstrings come first)
+    "E501",  # Line too long (handled separately)
+    "E741",  # Ambiguous variable name (l, r are standard in category theory)
+]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
