@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from ..egraph import EGraph
+from ..egraph.saturation import saturate
 from ..ir import Expr
+from ..rewrite import Rewrite
 from ..signature import Signature
 
 if TYPE_CHECKING:
@@ -48,6 +51,22 @@ class Shard:
                 raise ValueError("global_id must be non-negative")
             self.partition.owned[local_id] = global_id
         return local_id
+
+    def saturate_local(
+        self,
+        rewrites: Sequence[Rewrite],
+        *,
+        iters: int = 8,
+        max_applications: int = 10_000,
+    ) -> None:
+        """Run bounded saturation on this shard and emit owned merge events."""
+
+        saturate(
+            self.partition.egraph,
+            rewrites,
+            iters=iters,
+            max_applications=max_applications,
+        )
 
     def _global_for_local(self, local_id: int) -> int | None:
         if local_id in self.partition.owned:
