@@ -19,7 +19,7 @@ from ..egraph import EGraph, Trace
 from ..egraph.extract import Extractor
 from ..egraph.saturation import saturate
 from ..ir import Box, Expr, Id, Seq, pretty
-from ..rewrite import PBox, PSeq, Rewrite
+from ..rewrite import PBox, PSeq, PVar, Rewrite
 from ..signature import Signature
 from ..types import Obj
 
@@ -187,12 +187,20 @@ def _linear_fx_ops(graph_module: Any) -> list[str]:
 
 
 def _rules(tensor_obj: Obj) -> list[Rewrite]:
+    del tensor_obj
+    origin = "pointwise max(0, max(0, x)) = max(0, x)"
     return [
         Rewrite(
             name="relu_idempotence",
             lhs=PSeq(PBox("ReLU"), PBox("ReLU")),
             rhs=PBox("ReLU"),
-            origin="pointwise max(0, max(0, x)) = max(0, x)",
+            origin=origin,
+        ),
+        Rewrite(
+            name="relu_idempotence",
+            lhs=PSeq(PBox("ReLU"), PSeq(PBox("ReLU"), PVar("tail"))),
+            rhs=PSeq(PBox("ReLU"), PVar("tail")),
+            origin=origin,
         ),
     ]
 
