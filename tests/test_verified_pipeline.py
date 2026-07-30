@@ -43,7 +43,10 @@ def test_pipeline_rejects_parameterized_or_branching_graphs() -> None:
         def forward(self, x):
             return torch.relu(x) + x
 
-    with pytest.raises(ValueError, match="linear unary|unsupported FX function|unary operations"):
+    with pytest.raises(
+        ValueError,
+        match="linear unary|unsupported FX function|unary operations|branching nodes",
+    ):
         compile_fx_elementwise(Branching())
 
 
