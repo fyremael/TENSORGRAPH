@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+import inspect
+from collections.abc import Callable, Sequence
+from typing import cast
 
-from ..rewrite.pattern import Pattern, ematch, ematch_at, PBox, PSeq, PPar, PIter
+from ..rewrite.pattern import PBox, PIter, PPar, PSeq, Pattern, ematch_at
 from ..rewrite.rule import Rewrite, instantiate_pattern
 from .egraph import EGraph
 from .trace import Trace
@@ -15,121 +17,100 @@ def saturate(
     max_applications: int = 10_000,
     trace: Trace | None = None,
 ) -> None:
-    """Equality saturation loop.
+    """Apply typed rewrites until a fixed point or a configured bound."""
 
-    Iteratively applies rewrites until a fixed point or `iters`.
-
-    Args:
-        eg: The e-graph to saturate.
-        rewrites: Sequence of rewrite rules to apply.
-        iters: Maximum number of saturation iterations.
-        max_applications: Maximum rewrite applications per iteration.
-        trace: Optional Trace object to record rewrite applications (FR-7).
-
-    Safety:
-        - Hard caps on total rewrite applications per iteration.
-    """
-    
-    # Pre-index rules by head symbol for fast lookup
     rules_by_head: dict[str, list[Rewrite]] = {}
     wildcard_rules: list[Rewrite] = []
 
-    for rw in rewrites:
-        head_key = None
-        if isinstance(rw.lhs, PBox):
-            head_key = f"Box:{rw.lhs.op}"
-        elif isinstance(rw.lhs, PSeq):
+    for rewrite in rewrites:
+        head_key: str | None = None
+        if isinstance(rewrite.lhs, PBox):
+            head_key = f"Box:{rewrite.lhs.op}"
+        elif isinstance(rewrite.lhs, PSeq):
             head_key = "Seq"
-        elif isinstance(rw.lhs, PPar):
+        elif isinstance(rewrite.lhs, PPar):
             head_key = "Par"
-        elif isinstance(rw.lhs, PIter):
+        elif isinstance(rewrite.lhs, PIter):
             head_key = "Iter"
-        # Add other structural patterns as needed if we have specific tags for them
-        
-        if head_key:
-            rules_by_head.setdefault(head_key, []).append(rw)
+
+        if head_key is None:
+            wildcard_rules.append(rewrite)
         else:
-            # PVar or unknown structure matches everything
-            wildcard_rules.append(rw)
+            rules_by_head.setdefault(head_key, []).append(rewrite)
 
     for _ in range(iters):
         applied = 0
-        
-        # Inverted loop: Iterate E-classes -> Find Rules
-        # Sort for determinism
-        reps = sorted(eg.nodes.keys())
-        
-        for rep in reps:
-            # Check if rep still exists (might have been merged away)
-            if rep not in eg.nodes:
+        representatives = sorted(eg.nodes)
+
+        for representative in representatives:
+            if representative not in eg.nodes:
                 continue
 
-            # Gather candidate rules for this e-class
-            candidates = []
-            if wildcard_rules:
-                candidates.extend(wildcard_rules)
-            
-            # Check nodes in the class to find applicable specific rules
-            # Use a set to avoid adding same rule multiple times if multiple nodes match head
-            seen_rules = {id(r) for r in wildcard_rules}
-            
-            for en in eg.nodes[rep]:
-                key = None
-                if en.tag == "Box":
-                    key = f"Box:{en.data[0]}"
-                else:
-                    key = en.tag
-                
-                if key in rules_by_head:
-                    for rw in rules_by_head[key]:
-                        # Optimization: Avoid set lookup if list is short? 
-                        # Or just use set for seen IDs.
-                        if id(rw) not in seen_rules:
-                            candidates.append(rw)
-                            seen_rules.add(id(rw))
+            candidates = list(wildcard_rules)
+            seen_rules = {id(rule) for rule in wildcard_rules}
 
-            # Attempt matches
-            for rw in candidates:
+            for enode in eg.nodes[representative]:
+                key = f"Box:{enode.data[0]}" if enode.tag == "Box" else enode.tag
+                for rewrite in rules_by_head.get(key, ()):  # type: ignore[arg-type]
+                    if id(rewrite) not in seen_rules:
+                        candidates.append(rewrite)
+                        seen_rules.add(id(rewrite))
+
+            for rewrite in candidates:
                 if applied >= max_applications:
-                    break # Break inner rule loop
-                
-                # ematch_at returns list[tuple[Subst, ObjSubst, DataSubst]]
-                matches = ematch_at(eg, rep, rw.lhs, {}, {}, {})
-                
-                for env, oenv, denv in matches:
+                    break
+
+                matches = ematch_at(eg, representative, rewrite.lhs, {}, {}, {})
+                for expression_env, object_env, data_env in matches:
                     if applied >= max_applications:
                         break
 
-                    if isinstance(rw.rhs, Pattern):
-                        rhs_id = instantiate_pattern(eg, rw.rhs, env, oenv, denv)
+                    if isinstance(rewrite.rhs, Pattern):
+                        rhs_id = instantiate_pattern(
+                            eg,
+                            rewrite.rhs,
+                            expression_env,
+                            object_env,
+                            data_env,
+                        )
                     else:
-                        import inspect
-                        sig_len = len(inspect.signature(rw.rhs).parameters) if callable(rw.rhs) else 5
-                        rhs_id = rw.rhs(eg, rep, env, oenv) if sig_len == 4 else rw.rhs(eg, rep, env, oenv, denv)
+                        builder = cast(Callable[..., int], rewrite.rhs)
+                        parameter_count = len(inspect.signature(builder).parameters)
+                        if parameter_count == 4:
+                            rhs_id = builder(eg, representative, expression_env, object_env)
+                        elif parameter_count == 5:
+                            rhs_id = builder(
+                                eg,
+                                representative,
+                                expression_env,
+                                object_env,
+                                data_env,
+                            )
+                        else:
+                            raise TypeError(
+                                f"rewrite builder {rewrite.name!r} must accept four or five arguments"
+                            )
 
-                    root_before = eg.uf.find(rep)
+                    root_before = eg.uf.find(representative)
                     rhs_before = eg.uf.find(rhs_id)
-
-                    merged_rep = eg.merge(rep, rhs_id, reason=rw.name)
+                    merged_rep = eg.merge(representative, rhs_id, reason=rewrite.name)
 
                     if trace is not None:
                         trace.record(
-                            rule_name=rw.name,
+                            rule_name=rewrite.name,
                             root_eclass=root_before,
                             rhs_eclass=rhs_before,
                             merged_from=root_before if merged_rep != root_before else rhs_before,
                             merged_to=merged_rep,
-                            expr_env=env,
-                            obj_env=oenv,
-                            origin_mate=rw.origin,
+                            expr_env=expression_env,
+                            obj_env=object_env,
+                            origin_mate=rewrite.origin,
                         )
-
                     applied += 1
-            
+
             if applied >= max_applications:
                 break
 
         eg.rebuild()
-
         if applied == 0:
             break
