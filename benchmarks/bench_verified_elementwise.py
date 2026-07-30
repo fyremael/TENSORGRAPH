@@ -15,9 +15,10 @@ import statistics
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import torch
 
@@ -125,9 +126,15 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         reference = model(x)
         torch.cuda.synchronize()
         max_abs_error = float((candidate - reference).abs().max().item()) if size else 0.0
-        max_rel_error = float(
-            ((candidate - reference).abs() / reference.abs().clamp_min(args.atol)).max().item()
-        ) if size else 0.0
+        max_rel_error = (
+            float(
+                ((candidate - reference).abs() / reference.abs().clamp_min(args.atol))
+                .max()
+                .item()
+            )
+            if size
+            else 0.0
+        )
         numerical_pass = bool(
             torch.allclose(candidate, reference, rtol=args.rtol, atol=args.atol)
         )
@@ -142,9 +149,15 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             generated.run(x, block_size=args.block_size)
         torch.cuda.synchronize()
 
-        eager_samples = [_cuda_sample_ms(lambda: model(x)) for _ in range(args.repetitions)]
+        eager_samples = [
+            _cuda_sample_ms(lambda value=x: model(value)) for _ in range(args.repetitions)
+        ]
         generated_samples = [
-            _cuda_sample_ms(lambda: generated.run(x, block_size=args.block_size))
+            _cuda_sample_ms(
+                lambda value=x, block_size=args.block_size: generated.run(
+                    value, block_size=block_size
+                )
+            )
             for _ in range(args.repetitions)
         ]
 
