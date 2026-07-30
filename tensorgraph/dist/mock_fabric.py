@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import deque
+from contextlib import suppress
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -39,10 +40,8 @@ class MockFabric:
                 if queue and queue[0] == (global_a, global_b):
                     queue.popleft()
                 else:
-                    try:
+                    with suppress(ValueError):
                         queue.remove((global_a, global_b))
-                    except ValueError:
-                        pass
                 shard.receive_merge(global_a, global_b)
             processed += 1
         return processed
