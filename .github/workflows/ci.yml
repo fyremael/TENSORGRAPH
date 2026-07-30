@@ -34,7 +34,7 @@ jobs:
           python -m pip install -e ".[dev,fx]"
 
       - name: Compile Python sources
-        run: python -m compileall -q tensorgraph tests benchmarks/bench_verified_elementwise.py
+        run: python -m compileall -q tensorgraph tests examples benchmarks/bench_verified_elementwise.py
 
       - name: Lint recovery surface
         run: |
@@ -42,6 +42,8 @@ jobs:
             tensorgraph/signature.py \
             tensorgraph/ir/primitives.py \
             tensorgraph/egraph/egraph.py \
+            tensorgraph/egraph/saturation.py \
+            tensorgraph/dist \
             tensorgraph/pipeline \
             tests/test_recovery_semantics.py \
             tests/test_verified_pipeline.py \
@@ -49,11 +51,14 @@ jobs:
             scripts/check_evidence_claims.py
 
       - name: Type check recovery surface
+        if: matrix.python-version == '3.10'
         run: |
           mypy \
             tensorgraph/signature.py \
             tensorgraph/ir/primitives.py \
             tensorgraph/egraph/egraph.py \
+            tensorgraph/egraph/saturation.py \
+            tensorgraph/dist \
             tensorgraph/pipeline
 
       - name: Enforce evidence and claim policy
