@@ -13,7 +13,6 @@ import linecache
 import operator
 import time
 from dataclasses import dataclass
-from functools import reduce
 from typing import Any
 
 from ..egraph import EGraph, Trace
@@ -84,8 +83,11 @@ class GeneratedElementwiseKernel:
 def _compose(ops: list[str], tensor_obj: Obj) -> Expr:
     if not ops:
         return Id(tensor_obj)
-    boxes = [Box(op) for op in ops]
-    return reduce(Seq, boxes)
+
+    expression: Expr = Box(ops[0])
+    for op in ops[1:]:
+        expression = Seq(expression, Box(op))
+    return expression
 
 
 def _module_op(module: Any) -> str | None:
