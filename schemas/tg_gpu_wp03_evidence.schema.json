@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/fyremael/TENSORGRAPH/schemas/tg_gpu_wp03_evidence.schema.json",
+  "title": "TG-GPU-WP03 native CUDA low-latency inference evidence",
+  "type": "object",
+  "required": [
+    "schema",
+    "package",
+    "repository",
+    "timestamp_utc",
+    "commit_sha",
+    "dirty_worktree",
+    "command",
+    "stack_id",
+    "seed",
+    "size",
+    "warmup",
+    "repetitions",
+    "request",
+    "versions",
+    "hardware",
+    "cells",
+    "matrix_summary",
+    "evidence_complete_for_requested_matrix",
+    "promotion_claim",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema": {"const": "tensorgraph.evidence.native-cuda-inference.v1"},
+    "package": {"const": "TG-GPU-WP03"},
+    "repository": {"const": "fyremael/TENSORGRAPH"},
+    "timestamp_utc": {"type": "string", "format": "date-time"},
+    "commit_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "dirty_worktree": {"const": false},
+    "command": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "stack_id": {"type": "string", "minLength": 1},
+    "seed": {"type": "integer"},
+    "size": {"type": "integer", "minimum": 1},
+    "warmup": {"type": "integer", "minimum": 1},
+    "repetitions": {"type": "integer", "minimum": 1},
+    "request": {
+      "type": "object",
+      "required": ["graphs", "dtypes", "regimes", "launch_modes"],
+      "properties": {
+        "graphs": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "dtypes": {
+          "type": "array",
+          "items": {"enum": ["float16", "bfloat16", "float32"]},
+          "uniqueItems": true
+        },
+        "regimes": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "launch_modes": {
+          "type": "array",
+          "items": {"enum": ["ordinary", "graph_replay", "copy_plus_graph_replay"]},
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "versions": {"type": "object", "additionalProperties": true},
+    "hardware": {
+      "type": "object",
+      "required": ["gpu_index", "gpu_name", "gpu_compute_capability", "gpu_total_memory_bytes"],
+      "additionalProperties": true
+    },
+    "cells": {"type": "array", "items": {"$ref": "#/$defs/cell"}},
+    "matrix_summary": {
+      "type": "object",
+      "required": [
+        "requested_cells",
+        "recorded_cells",
+        "passed_cells",
+        "unsupported_cells",
+        "failed_cells",
+        "unsupported_keys",
+        "failed_keys"
+      ],
+      "additionalProperties": true
+    },
+    "evidence_complete_for_requested_matrix": {"type": "boolean"},
+    "promotion_claim": {"const": false},
+    "claim_boundary": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "timing": {
+      "type": "object",
+      "required": ["samples_ms", "median_ms", "minimum_ms", "maximum_ms"],
+      "properties": {
+        "samples_ms": {"type": "array", "items": {"type": "number"}, "minItems": 1},
+        "median_ms": {"type": "number"},
+        "minimum_ms": {"type": "number"},
+        "maximum_ms": {"type": "number"}
+      },
+      "additionalProperties": true
+    },
+    "cell": {
+      "type": "object",
+      "required": [
+        "key",
+        "graph",
+        "operations",
+        "dtype",
+        "regime",
+        "launch_mode",
+        "disposition",
+        "generated_source",
+        "generated_source_sha256",
+        "abi",
+        "compiler",
+        "numerical",
+        "timings",
+        "baselines"
+      ],
+      "properties": {
+        "key": {"type": "string", "minLength": 1},
+        "graph": {"type": "string", "minLength": 1},
+        "operations": {"type": "array", "items": {"type": "string"}},
+        "dtype": {"enum": ["float16", "bfloat16", "float32"]},
+        "regime": {"type": "string", "minLength": 1},
+        "launch_mode": {"enum": ["ordinary", "graph_replay", "copy_plus_graph_replay"]},
+        "disposition": {"enum": ["passed", "unsupported", "failed"]},
+        "generated_source": {"type": "string"},
+        "generated_source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "abi": {"type": "object"},
+        "compiler": {"type": "object"},
+        "numerical": {"type": "object"},
+        "timings": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/timing"}
+        },
+        "baselines": {"type": "object"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

@@ -42,7 +42,10 @@ jobs:
             benchmarks/bench_verified_elementwise.py \
             benchmarks/bench_six_baseline_elementwise.py \
             benchmarks/bench_portability_training.py \
-            scripts/validate_wp02_evidence.py
+            benchmarks/bench_native_cuda_inference.py \
+            scripts/run_wp03_evidence.py \
+            scripts/validate_wp02_evidence.py \
+            scripts/validate_wp03_evidence.py
 
       - name: Lint recovery surface
         run: |
@@ -53,16 +56,23 @@ jobs:
             tensorgraph/egraph/saturation.py \
             tensorgraph/dist \
             tensorgraph/pipeline \
+            tensorgraph/codegen/native_cuda.py \
+            tensorgraph/runtime \
             tests/test_recovery_semantics.py \
             tests/test_verified_pipeline.py \
             tests/test_six_baseline_benchmark.py \
             tests/test_training_elementwise.py \
             tests/test_wp02_evidence_contract.py \
+            tests/test_native_cuda_runtime.py \
+            tests/test_wp03_evidence_contract.py \
             benchmarks/bench_verified_elementwise.py \
             benchmarks/bench_six_baseline_elementwise.py \
             benchmarks/bench_portability_training.py \
+            benchmarks/bench_native_cuda_inference.py \
             scripts/check_evidence_claims.py \
-            scripts/validate_wp02_evidence.py
+            scripts/run_wp03_evidence.py \
+            scripts/validate_wp02_evidence.py \
+            scripts/validate_wp03_evidence.py
 
       - name: Type check recovery surface
         if: matrix.python-version == '3.10'
@@ -73,7 +83,9 @@ jobs:
             tensorgraph/egraph/egraph.py \
             tensorgraph/egraph/saturation.py \
             tensorgraph/dist \
-            tensorgraph/pipeline
+            tensorgraph/pipeline \
+            tensorgraph/codegen/native_cuda.py \
+            tensorgraph/runtime
 
       - name: Enforce evidence and claim policy
         run: python scripts/check_evidence_claims.py
@@ -120,12 +132,26 @@ jobs:
             --repetitions 1 \
             --output /tmp/wp02-evidence.json
           wp02_status=$?
+
+          python scripts/run_wp03_evidence.py \
+            --stack-id cpu-contract \
+            --graphs relu \
+            --dtypes float32 \
+            --regimes moderate \
+            --launch-modes ordinary \
+            --size 16 \
+            --warmup 1 \
+            --repetitions 1 \
+            --output /tmp/wp03-evidence.json
+          wp03_status=$?
           set -e
 
           test "$verified_status" -ne 0
           test "$matrix_status" -ne 0
           test "$wp02_status" -ne 0
+          test "$wp03_status" -ne 0
           test ! -e /tmp/verified-evidence.json
           test ! -e /tmp/six-baseline-evidence.json
           test ! -e /tmp/six-baseline-evidence.csv
           test ! -e /tmp/wp02-evidence.json
+          test ! -e /tmp/wp03-evidence.json
