@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 CHECKER = Path(__file__).resolve()
@@ -23,6 +25,19 @@ PROHIBITED_SOURCE_FRAGMENTS = {
     ),
 }
 
+EXPECTED_EVALUATED_COMMIT = "92bfa21538e60a4cc321f32f7340ba70eee00db0"
+EXPECTED_MERGE_COMMIT = "19fd6760d9b876c34880a79933c3e6914bf8fbf4"
+EXPECTED_ARTIFACTS = {
+    "six_baseline": "f0b4003f0f1250f4e4430a65897ef1bbbe8a6659f88fca9c74f2273538901c40",
+    "sigmoid": "e7fb0f2e7050e050d34857ee57b8547c306592625e4244b20ae4378531dd155a",
+    "tanh": "e9568d902d1dfd12e6816f28527c8a011e4c4e9e4ae14623a19b47cad9de5361",
+    "nonlinear_bundle": "a62b75014f08207d4f60b2c20be4f340f747599e45a1bc286d1564c00ca593c8",
+}
+EXPECTED_GENERATED_SOURCES = {
+    "sigmoid": "d39a14b53fe10ee1e02adf00861ff0069778fcf553f5e120974882572c30256a",
+    "tanh": "1b3b8c50dcb1766edb9d043faf8372c06d444b06ed3ef108fabf6edf509555b2",
+}
+
 
 def _require_fragments(
     failures: list[str],
@@ -39,6 +54,107 @@ def _require_fragments(
     for fragment in fragments:
         if fragment not in text:
             failures.append(f"{label} {relative} is missing required fragment: {fragment}")
+
+
+def _load_json(failures: list[str], relative: str, label: str) -> dict[str, Any] | None:
+    path = ROOT / relative
+    if not path.exists():
+        failures.append(f"missing {label}: {relative}")
+        return None
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        failures.append(f"invalid {label} {relative}: {exc}")
+        return None
+    if not isinstance(value, dict):
+        failures.append(f"{label} {relative} must contain a JSON object")
+        return None
+    return value
+
+
+def _check_gpu_admission(failures: list[str]) -> None:
+    relative = "evidence/TG-GPU-WP01/ADMISSION.json"
+    admission = _load_json(failures, relative, "GPU admission record")
+    if admission is None:
+        return
+
+    expected_scalars = {
+        "schema": "tensorgraph.evidence.admission.v1",
+        "package": "TG-GPU-WP01",
+        "status": "complete",
+        "repository": "fyremael/TENSORGRAPH",
+        "evaluated_commit_sha": EXPECTED_EVALUATED_COMMIT,
+        "merge_commit_sha": EXPECTED_MERGE_COMMIT,
+        "pull_request": 2,
+    }
+    for key, expected in expected_scalars.items():
+        if admission.get(key) != expected:
+            failures.append(f"GPU admission field {key!r} must equal {expected!r}")
+
+    ci = admission.get("ci")
+    if not isinstance(ci, dict) or ci.get("conclusion") != "success":
+        failures.append("GPU admission must record a successful CI conclusion")
+
+    environment = admission.get("environment")
+    expected_environment = {
+        "gpu_name": "Tesla T4",
+        "gpu_compute_capability": [7, 5],
+        "torch": "2.11.0+cu128",
+        "triton": "3.6.0",
+        "cuda_runtime": "12.8",
+    }
+    if not isinstance(environment, dict):
+        failures.append("GPU admission environment must be an object")
+    else:
+        for key, expected in expected_environment.items():
+            if environment.get(key) != expected:
+                failures.append(f"GPU admission environment {key!r} must equal {expected!r}")
+
+    artifacts = admission.get("artifacts")
+    if not isinstance(artifacts, dict):
+        failures.append("GPU admission artifacts must be an object")
+    else:
+        for name, expected_sha in EXPECTED_ARTIFACTS.items():
+            artifact = artifacts.get(name)
+            if not isinstance(artifact, dict):
+                failures.append(f"GPU admission is missing artifact {name!r}")
+                continue
+            if artifact.get("sha256") != expected_sha:
+                failures.append(f"GPU admission artifact {name!r} has the wrong SHA-256")
+            generated_sha = EXPECTED_GENERATED_SOURCES.get(name)
+            if generated_sha is not None and artifact.get("generated_source_sha256") != generated_sha:
+                failures.append(
+                    f"GPU admission artifact {name!r} has the wrong generated-source SHA-256"
+                )
+            if name != "nonlinear_bundle" and artifact.get("numerical_status") not in {
+                "all_passed",
+                "all_passed_exact",
+            }:
+                failures.append(f"GPU admission artifact {name!r} is not numerically admitted")
+
+    decision = admission.get("admission")
+    expected_decision = {
+        "sigmoid_gpu_evidence": "admitted",
+        "tanh_gpu_evidence": "admitted",
+        "six_baseline_gpu_evidence": "admitted",
+        "portable_lowering_contains": "tl.exp",
+        "portable_lowering_excludes": "tl.sigmoid",
+    }
+    if not isinstance(decision, dict):
+        failures.append("GPU admission decision must be an object")
+    else:
+        for key, expected in expected_decision.items():
+            if decision.get(key) != expected:
+                failures.append(f"GPU admission decision {key!r} must equal {expected!r}")
+
+    checksums_path = ROOT / "evidence/TG-GPU-WP01/SHA256SUMS"
+    if not checksums_path.exists():
+        failures.append("missing GPU evidence checksum ledger")
+    else:
+        checksums = checksums_path.read_text(encoding="utf-8")
+        for expected_sha in EXPECTED_ARTIFACTS.values():
+            if expected_sha not in checksums:
+                failures.append(f"GPU evidence checksum ledger is missing {expected_sha}")
 
 
 def main() -> int:
@@ -104,6 +220,8 @@ def main() -> int:
         relative="docs/GPU_EVIDENCE_PACKAGE.md",
         label="GPU evidence package",
         fragments=(
+            "Status:** complete",
+            "ADMISSION.json",
             "Obligation A",
             "Obligation B",
             "six-baseline",
@@ -123,6 +241,8 @@ def main() -> int:
     ):
         if required not in lowering:
             failures.append(f"verified lowering is missing portable expression: {required}")
+
+    _check_gpu_admission(failures)
 
     if failures:
         print("Evidence/claim policy violations:")
