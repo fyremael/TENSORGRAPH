@@ -206,7 +206,12 @@ def _rules(tensor_obj: Obj) -> list[Rewrite]:
 
 
 def _emit_triton(expr: Expr, kernel_name: str = _KERNEL_NAME) -> str:
-    """Emit a complete Triton module for a verified unary expression."""
+    """Emit a complete Triton module for a verified unary expression.
+
+    Sigmoid and Tanh deliberately lower through ``tl.exp`` arithmetic rather
+    than ``tl.sigmoid``. The latter failed during JIT compilation in a Colab
+    Triton 3.6.0 environment. ``tl.exp`` keeps these lowerings source-portable.
+    """
 
     operations: list[str] = []
 
@@ -222,7 +227,9 @@ def _emit_triton(expr: Expr, kernel_name: str = _KERNEL_NAME) -> str:
             collect(term.first)
             collect(term.second)
             return
-        raise ValueError(f"verified lowering accepts only Id, Box, and Seq; got {type(term).__name__}")
+        raise ValueError(
+            f"verified lowering accepts only Id, Box, and Seq; got {type(term).__name__}"
+        )
 
     collect(expr)
     lines = [
@@ -241,9 +248,9 @@ def _emit_triton(expr: Expr, kernel_name: str = _KERNEL_NAME) -> str:
         if op == "ReLU":
             lines.append("    value = tl.where(value > 0.0, value, 0.0)")
         elif op == "Sigmoid":
-            lines.append("    value = tl.sigmoid(value)")
+            lines.append("    value = 1.0 / (1.0 + tl.exp(-value))")
         elif op == "Tanh":
-            lines.append("    value = 2.0 * tl.sigmoid(2.0 * value) - 1.0")
+            lines.append("    value = 2.0 / (1.0 + tl.exp(-2.0 * value)) - 1.0")
         elif op == "Neg":
             lines.append("    value = -value")
         elif op == "Exp":
