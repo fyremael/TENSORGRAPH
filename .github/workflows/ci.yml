@@ -34,7 +34,13 @@ jobs:
           python -m pip install -e ".[dev,fx]"
 
       - name: Compile Python sources
-        run: python -m compileall -q tensorgraph tests examples benchmarks/bench_verified_elementwise.py
+        run: |
+          python -m compileall -q \
+            tensorgraph \
+            tests \
+            examples \
+            benchmarks/bench_verified_elementwise.py \
+            benchmarks/bench_six_baseline_elementwise.py
 
       - name: Lint recovery surface
         run: |
@@ -47,7 +53,9 @@ jobs:
             tensorgraph/pipeline \
             tests/test_recovery_semantics.py \
             tests/test_verified_pipeline.py \
+            tests/test_six_baseline_benchmark.py \
             benchmarks/bench_verified_elementwise.py \
+            benchmarks/bench_six_baseline_elementwise.py \
             scripts/check_evidence_claims.py
 
       - name: Type check recovery surface
@@ -77,13 +85,31 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Verify GPU benchmark fails closed without CUDA
+      - name: Verify GPU benchmarks fail closed without CUDA
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev,fx]"
+
           set +e
-          python benchmarks/bench_verified_elementwise.py --sizes 16 --warmup 0 --repetitions 1 --output /tmp/evidence.json
-          status=$?
+          python benchmarks/bench_verified_elementwise.py \
+            --terminal-op sigmoid \
+            --sizes 16 \
+            --warmup 0 \
+            --repetitions 1 \
+            --output /tmp/verified-evidence.json
+          verified_status=$?
+
+          python benchmarks/bench_six_baseline_elementwise.py \
+            --sizes 16 \
+            --dtypes float32 \
+            --warmup 0 \
+            --repetitions 1 \
+            --output /tmp/six-baseline-evidence.json
+          matrix_status=$?
           set -e
-          test "$status" -ne 0
-          test ! -e /tmp/evidence.json
+
+          test "$verified_status" -ne 0
+          test "$matrix_status" -ne 0
+          test ! -e /tmp/verified-evidence.json
+          test ! -e /tmp/six-baseline-evidence.json
+          test ! -e /tmp/six-baseline-evidence.csv
