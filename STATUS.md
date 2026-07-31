@@ -46,7 +46,7 @@ The authoritative closure record is `evidence/TG-GPU-WP01/ADMISSION.json`. Artif
 
 The implementation package provides exact generated forward execution, generated Sigmoid and Tanh input-gradient kernels, a 60-cell per-environment matrix runner, a machine-readable evidence schema, a fail-closed validator, CPU contract tests, optional CUDA differential tests, and an interpretation charter.
 
-No TG-GPU-WP02 CUDA portability or backward evidence is admitted by implementation alone. Promotion remains gated on raw same-commit artifacts from the governed hardware and software matrix and independent review.
+No TG-GPU-WP02 CUDA portability or backward evidence is admitted by implementation alone. Therefore, no WP02 CUDA portability or backward evidence is admitted. Promotion remains gated on raw same-commit artifacts from the governed hardware and software matrix and independent review.
 
 ## Claim boundary
 
