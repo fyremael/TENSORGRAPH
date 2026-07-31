@@ -24,6 +24,23 @@ PROHIBITED_SOURCE_FRAGMENTS = {
 }
 
 
+def _require_fragments(
+    failures: list[str],
+    *,
+    relative: str,
+    fragments: tuple[str, ...],
+    label: str,
+) -> None:
+    path = ROOT / relative
+    if not path.exists():
+        failures.append(f"missing {label}: {relative}")
+        return
+    text = path.read_text(encoding="utf-8")
+    for fragment in fragments:
+        if fragment not in text:
+            failures.append(f"{label} {relative} is missing required fragment: {fragment}")
+
+
 def main() -> int:
     failures: list[str] = []
 
@@ -54,16 +71,58 @@ def main() -> int:
             if fragment in text:
                 failures.append(f"{path.relative_to(ROOT)} contains {description}")
 
-    benchmark = (ROOT / "benchmarks/bench_verified_elementwise.py").read_text(encoding="utf-8")
+    _require_fragments(
+        failures,
+        relative="benchmarks/bench_verified_elementwise.py",
+        label="verified benchmark",
+        fragments=(
+            "generated.run",
+            "raw_ms",
+            "generated_source_sha256",
+            "dirty_worktree",
+            "torch.allclose",
+            "--terminal-op",
+        ),
+    )
+    _require_fragments(
+        failures,
+        relative="benchmarks/bench_six_baseline_elementwise.py",
+        label="six-baseline benchmark",
+        fragments=(
+            "pytorch_eager_source",
+            "pytorch_eager_optimized",
+            "torch_compile_source",
+            "torch_compile_optimized",
+            "tensorgraph_generated",
+            "direct_triton_reference",
+            "raw_ms",
+            "dirty_worktree",
+        ),
+    )
+    _require_fragments(
+        failures,
+        relative="docs/GPU_EVIDENCE_PACKAGE.md",
+        label="GPU evidence package",
+        fragments=(
+            "Obligation A",
+            "Obligation B",
+            "six-baseline",
+            "Sigmoid",
+            "Tanh",
+        ),
+    )
+
+    lowering = (ROOT / "tensorgraph/pipeline/verified_elementwise.py").read_text(
+        encoding="utf-8"
+    )
+    if 'lines.append("    value = tl.sigmoid(value)")' in lowering:
+        failures.append("verified lowering reintroduced direct tl.sigmoid emission")
     for required in (
-        "generated.run",
-        "raw_ms",
-        "generated_source_sha256",
-        "dirty_worktree",
-        "torch.allclose",
+        'lines.append("    value = 1.0 / (1.0 + tl.exp(-value))")',
+        'lines.append("    value = 2.0 / (1.0 + tl.exp(-2.0 * value)) - 1.0")',
     ):
-        if required not in benchmark:
-            failures.append(f"verified benchmark is missing required evidence field: {required}")
+        if required not in lowering:
+            failures.append(f"verified lowering is missing portable expression: {required}")
 
     if failures:
         print("Evidence/claim policy violations:")
