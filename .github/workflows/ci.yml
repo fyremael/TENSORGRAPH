@@ -40,7 +40,9 @@ jobs:
             tests \
             examples \
             benchmarks/bench_verified_elementwise.py \
-            benchmarks/bench_six_baseline_elementwise.py
+            benchmarks/bench_six_baseline_elementwise.py \
+            benchmarks/bench_portability_training.py \
+            scripts/validate_wp02_evidence.py
 
       - name: Lint recovery surface
         run: |
@@ -54,9 +56,13 @@ jobs:
             tests/test_recovery_semantics.py \
             tests/test_verified_pipeline.py \
             tests/test_six_baseline_benchmark.py \
+            tests/test_training_elementwise.py \
+            tests/test_wp02_evidence_contract.py \
             benchmarks/bench_verified_elementwise.py \
             benchmarks/bench_six_baseline_elementwise.py \
-            scripts/check_evidence_claims.py
+            benchmarks/bench_portability_training.py \
+            scripts/check_evidence_claims.py \
+            scripts/validate_wp02_evidence.py
 
       - name: Type check recovery surface
         if: matrix.python-version == '3.10'
@@ -106,10 +112,20 @@ jobs:
             --repetitions 1 \
             --output /tmp/six-baseline-evidence.json
           matrix_status=$?
+
+          python benchmarks/bench_portability_training.py \
+            --stack-id cpu-contract \
+            --size 16 \
+            --warmup 0 \
+            --repetitions 1 \
+            --output /tmp/wp02-evidence.json
+          wp02_status=$?
           set -e
 
           test "$verified_status" -ne 0
           test "$matrix_status" -ne 0
+          test "$wp02_status" -ne 0
           test ! -e /tmp/verified-evidence.json
           test ! -e /tmp/six-baseline-evidence.json
           test ! -e /tmp/six-baseline-evidence.csv
+          test ! -e /tmp/wp02-evidence.json
