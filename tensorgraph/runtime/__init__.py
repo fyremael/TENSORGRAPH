@@ -1,8 +1,8 @@
 """Executable runtime integrations for governed TENSORGRAPH backends."""
 
 from .native_cuda import (
-    NativeCUDAGraph,
     NativeCUDAExecutable,
+    NativeCUDAGraph,
     compile_native_cuda,
 )
 
