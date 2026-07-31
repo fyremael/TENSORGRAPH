@@ -165,7 +165,9 @@ def _emit_backward_triton(
     else:
         lines.append("    derivative = 1.0 - y * y")
     if has_relu:
-        lines.append("    derivative = tl.where(x > 0.0, derivative, 0.0)")
+        lines.append(
+            "    derivative = tl.where((x > 0.0) | (x != x), derivative, 0.0)"
+        )
     lines.extend(
         [
             "    grad_input = grad_output * derivative",
