@@ -1,6 +1,6 @@
 # TENSORGRAPH capability ledger
 
-**Ledger version:** 1  
+**Ledger version:** 2  
 **Target package version:** `0.6.0.dev0`  
 **Authority:** this file controls capability and maturity language used elsewhere in the repository.
 
@@ -22,7 +22,9 @@ Status values:
 | Pure Cartesian structural naturality | bounded-experimental | `Dup` and `Del` only for morphisms not marked `effectful` | Effect-aware adversarial suite and formal semantic note. |
 | Symmetric swap naturality | bounded-experimental | Typed `Par` followed by compatible `Swap` | Coherence tests. |
 | FX unary elementwise import | bounded-experimental | Linear chains of supported unary modules/functions | Shape/dtype/device metadata and unsupported-node fail-closed tests. |
-| Generated Triton unary execution | bounded-experimental | Contiguous floating tensors on CUDA; supported unary chains | GPU CI evidence, numerical tolerance, generated-source identity. |
+| Generated Triton unary execution | bounded-experimental | Contiguous floating CUDA tensors; ReLU, Neg, Exp, Log, portable-exp Sigmoid and Tanh lowering | Same-commit GPU evidence, numerical tolerance, generated-source identity. |
+| Portable Sigmoid and Tanh lowering | bounded-experimental | Forward-only unary chains lowered through `tl.exp`; no `tl.sigmoid` dependency | Admit both Sigmoid and Tanh GPU evidence on the reviewed commit. |
+| Six-baseline GPU comparison | experimental | Source/optimized eager, source/optimized `torch.compile`, TENSORGRAPH, direct Triton for `ReLU -> ReLU -> Neg` | Complete six-lane CUDA evidence with raw samples and numerical agreement. |
 | General FX DAG import | experimental | Research representation only | Tensor metadata, aliasing, mutation, parameters, and round-trip execution. |
 | Reduction code generation | experimental | Source-generation experiments | Correct neutral elements, multi-block algorithms, compiled differential tests. |
 | CUDA C++ generation | experimental | Source-generation experiments | Compile, launch, sanitizer, and numerical tests. |
