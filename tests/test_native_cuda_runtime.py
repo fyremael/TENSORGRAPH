@@ -98,7 +98,10 @@ def test_native_cuda_ordinary_and_graph_replay_match_changed_inputs(dtype_name: 
     torch = pytest.importorskip("torch")
     if not torch.cuda.is_available():
         pytest.skip("CUDA is unavailable")
-    if getattr(torch.utils.cpp_extension, "CUDA_HOME", None) is None:
+
+    from torch.utils.cpp_extension import CUDA_HOME
+
+    if CUDA_HOME is None:
         pytest.skip("CUDA toolkit is unavailable")
 
     from tensorgraph.runtime.native_cuda import compile_native_cuda
