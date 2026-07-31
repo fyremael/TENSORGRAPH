@@ -48,7 +48,11 @@ def test_training_codegen_accepts_one_optimized_relu_prefix(module: torch.nn.Mod
 
     assert artifact.optimized_ops[0] == "ReLU"
     assert artifact.optimized_ops.count("ReLU") == 1
-    assert "tl.where(x > 0.0, derivative, 0.0)" in artifact.generated_backward_source
+    assert "(value != value)" in artifact.forward.generated_source
+    assert (
+        "tl.where((x > 0.0) | (x != x), derivative, 0.0)"
+        in artifact.generated_backward_source
+    )
 
 
 def test_training_codegen_rejects_unsupported_compositions() -> None:
