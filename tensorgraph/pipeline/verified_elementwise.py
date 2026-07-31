@@ -209,9 +209,11 @@ def _emit_triton(expr: Expr, kernel_name: str = _KERNEL_NAME) -> str:
     """Emit a complete Triton module for a verified unary expression.
 
     Sigmoid and Tanh deliberately lower through ``tl.exp`` arithmetic rather
-    than ``tl.sigmoid``. The latter failed during JIT compilation in a Colab
-    Triton 3.6.0 environment. ``tl.exp`` keeps these lowerings source-portable.
-    ReLU also preserves NaN values to match PyTorch's forward semantics.
+    than ``tl.sigmoid``. Triton 3.6 requires the exponential operand to be
+    ``fp32`` or ``fp64``, so the generated source promotes once before the first
+    transcendental operation. The typed output store converts the result back to
+    the destination tensor dtype. ReLU preserves NaN values to match PyTorch's
+    forward semantics.
     """
 
     operations: list[str] = []
@@ -245,7 +247,12 @@ def _emit_triton(expr: Expr, kernel_name: str = _KERNEL_NAME) -> str:
         "    value = tl.load(x_ptr + offsets, mask=mask, other=0.0)",
     ]
 
+    promoted_to_fp32 = False
     for op in operations:
+        if op in {"Sigmoid", "Tanh", "Exp", "Log"} and not promoted_to_fp32:
+            lines.append("    value = value.to(tl.float32)")
+            promoted_to_fp32 = True
+
         if op == "ReLU":
             lines.append(
                 "    value = tl.where((value > 0.0) | (value != value), value, 0.0)"
