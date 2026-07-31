@@ -1,6 +1,6 @@
 # TENSORGRAPH capability ledger
 
-**Ledger version:** 2  
+**Ledger version:** 3  
 **Target package version:** `0.6.0.dev0`  
 **Authority:** this file controls capability and maturity language used elsewhere in the repository.
 
@@ -22,9 +22,9 @@ Status values:
 | Pure Cartesian structural naturality | bounded-experimental | `Dup` and `Del` only for morphisms not marked `effectful` | Effect-aware adversarial suite and formal semantic note. |
 | Symmetric swap naturality | bounded-experimental | Typed `Par` followed by compatible `Swap` | Coherence tests. |
 | FX unary elementwise import | bounded-experimental | Linear chains of supported unary modules/functions | Shape/dtype/device metadata and unsupported-node fail-closed tests. |
-| Generated Triton unary execution | bounded-experimental | Contiguous floating CUDA tensors; ReLU, Neg, Exp, Log, portable-exp Sigmoid and Tanh lowering | Same-commit GPU evidence, numerical tolerance, generated-source identity. |
-| Portable Sigmoid and Tanh lowering | bounded-experimental | Forward-only unary chains lowered through `tl.exp`; no `tl.sigmoid` dependency | Admit both Sigmoid and Tanh GPU evidence on the reviewed commit. |
-| Six-baseline GPU comparison | experimental | Source/optimized eager, source/optimized `torch.compile`, TENSORGRAPH, direct Triton for `ReLU -> ReLU -> Neg` | Complete six-lane CUDA evidence with raw samples and numerical agreement. |
+| Generated Triton unary execution | bounded-experimental | Contiguous floating CUDA tensors; bounded ReLU, Neg, portable-exp Sigmoid and Tanh paths | Preserve admitted same-commit evidence; extend across hardware, dtypes, graph forms, and backward execution. |
+| Portable Sigmoid and Tanh lowering | bounded-experimental | Forward-only unary chains lowered through `tl.exp`; no `tl.sigmoid` dependency | TG-GPU-WP01 gate satisfied on the evaluated Tesla T4 stack; cross-version and cross-hardware evidence remains open. |
+| Six-baseline GPU comparison | bounded-experimental | Source/optimized eager, source/optimized `torch.compile`, TENSORGRAPH, and direct Triton for `ReLU -> ReLU -> Neg` | TG-GPU-WP01 gate satisfied on the evaluated Tesla T4 stack; performance portability remains open. |
 | General FX DAG import | experimental | Research representation only | Tensor metadata, aliasing, mutation, parameters, and round-trip execution. |
 | Reduction code generation | experimental | Source-generation experiments | Correct neutral elements, multi-block algorithms, compiled differential tests. |
 | CUDA C++ generation | experimental | Source-generation experiments | Compile, launch, sanitizer, and numerical tests. |
@@ -32,7 +32,13 @@ Status values:
 | Distributed saturation | scaffold | Local interfaces and partial transports | Complete workers, synchronization, failure handling, and multi-process tests. |
 | Neural rule scheduling | experimental | Research scheduler | Controlled comparison against deterministic scheduling. |
 | Historical benchmark reports | quarantined | Pre-recovery reports | Re-run under `docs/EVIDENCE_POLICY.md`; do not edit old numbers into compliance. |
-| Production readiness | not-established | Entire repository | Independent review, supported release contract, reproducible CI and GPU evidence. |
+| Production readiness | not-established | Entire repository | Independent review, supported release contract, reproducible CI and broader GPU evidence. |
+
+## TG-GPU-WP01 evidence admission
+
+The package is complete for evaluated commit `92bfa21538e60a4cc321f32f7340ba70eee00db0` on the recorded Tesla T4 environment. The code was merged through commit `19fd6760d9b876c34880a79933c3e6914bf8fbf4`.
+
+The authoritative closure record is `evidence/TG-GPU-WP01/ADMISSION.json`. Artifact identities are pinned in `evidence/TG-GPU-WP01/SHA256SUMS`. The admission covers Sigmoid, Tanh, and the six-baseline comparison. It remains bounded to the recorded forward-only graphs, hardware, and software stack.
 
 ## Claim boundary
 
