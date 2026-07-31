@@ -43,6 +43,7 @@ jobs:
             benchmarks/bench_six_baseline_elementwise.py \
             benchmarks/bench_portability_training.py \
             benchmarks/bench_native_cuda_inference.py \
+            scripts/run_wp03_evidence.py \
             scripts/validate_wp02_evidence.py \
             scripts/validate_wp03_evidence.py
 
@@ -69,6 +70,7 @@ jobs:
             benchmarks/bench_portability_training.py \
             benchmarks/bench_native_cuda_inference.py \
             scripts/check_evidence_claims.py \
+            scripts/run_wp03_evidence.py \
             scripts/validate_wp02_evidence.py \
             scripts/validate_wp03_evidence.py
 
@@ -131,7 +133,7 @@ jobs:
             --output /tmp/wp02-evidence.json
           wp02_status=$?
 
-          python benchmarks/bench_native_cuda_inference.py \
+          python scripts/run_wp03_evidence.py \
             --stack-id cpu-contract \
             --graphs relu \
             --dtypes float32 \
