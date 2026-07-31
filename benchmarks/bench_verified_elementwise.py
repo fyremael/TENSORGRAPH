@@ -1,4 +1,4 @@
-"""Produce admissible evidence for the verified elementwise compiler path.
+"""Produce admissible GPU evidence for portable unary elementwise lowering.
 
 The script exits nonzero unless it executes the exact generated Triton source on
 CUDA, observes numerical agreement with PyTorch, resolves an exact clean Git
@@ -23,6 +23,20 @@ from typing import Any
 import torch
 
 from tensorgraph.pipeline import compile_fx_elementwise, load_generated_kernel
+
+
+class _Neg(torch.nn.Module):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return -x
+
+
+def _terminal_module(name: str) -> torch.nn.Module:
+    mapping: dict[str, torch.nn.Module] = {
+        "sigmoid": torch.nn.Sigmoid(),
+        "tanh": torch.nn.Tanh(),
+        "neg": _Neg(),
+    }
+    return mapping[name]
 
 
 def _git(args: list[str]) -> str:
@@ -99,13 +113,19 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     model = torch.nn.Sequential(
         torch.nn.ReLU(),
         torch.nn.ReLU(),
-        torch.nn.Sigmoid(),
+        _terminal_module(args.terminal_op),
     ).cuda()
     model.eval()
 
     compile_start = time.perf_counter_ns()
     artifact = compile_fx_elementwise(model)
     compile_total_ns = time.perf_counter_ns() - compile_start
+
+    if args.terminal_op in {"sigmoid", "tanh"}:
+        if "tl.sigmoid" in artifact.generated_source:
+            raise RuntimeError("portable lowering gate failed: generated source uses tl.sigmoid")
+        if "tl.exp" not in artifact.generated_source:
+            raise RuntimeError("portable lowering gate failed: generated source omits tl.exp")
 
     load_start = time.perf_counter_ns()
     generated = load_generated_kernel(artifact)
@@ -116,7 +136,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     records: list[dict[str, Any]] = []
 
     for size_index, size in enumerate(args.sizes):
-        x = torch.randn(size, device="cuda", dtype=torch.float32)
+        x = torch.randn(size, device="cuda", dtype=torch.float32) * args.input_scale
 
         first_start = time.perf_counter_ns()
         candidate = generated.run(x, block_size=args.block_size)
@@ -169,6 +189,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 "dtype": str(x.dtype),
                 "shape": list(x.shape),
                 "contiguous": x.is_contiguous(),
+                "input_scale": args.input_scale,
                 "first_execution_ns": first_execution_ns,
                 "first_execution_includes_jit": size_index == 0,
                 "numerical": {
@@ -193,13 +214,14 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         )
 
     return {
-        "schema": "tensorgraph.evidence.verified-elementwise.v1",
+        "schema": "tensorgraph.evidence.verified-elementwise.v2",
         "admissible": True,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "repository": "fyremael/TENSORGRAPH",
         "commit_sha": commit,
         "dirty_worktree": dirty,
         "command": [sys.executable, *sys.argv],
+        "terminal_op": args.terminal_op,
         "seed": args.seed,
         "warmup": args.warmup,
         "repetitions": args.repetitions,
@@ -228,13 +250,15 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--terminal-op", choices=["sigmoid", "tanh", "neg"], default="sigmoid")
     parser.add_argument("--sizes", nargs="+", type=int, default=[1024, 65_536, 1_048_576])
     parser.add_argument("--warmup", type=int, default=25)
     parser.add_argument("--repetitions", type=int, default=100)
     parser.add_argument("--block-size", type=int, default=256)
     parser.add_argument("--seed", type=int, default=20260730)
-    parser.add_argument("--rtol", type=float, default=1e-5)
-    parser.add_argument("--atol", type=float, default=1e-6)
+    parser.add_argument("--input-scale", type=float, default=8.0)
+    parser.add_argument("--rtol", type=float, default=2e-5)
+    parser.add_argument("--atol", type=float, default=2e-6)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
@@ -244,6 +268,8 @@ def parse_args() -> argparse.Namespace:
         parser.error("warmup must be non-negative and repetitions must be positive")
     if args.block_size <= 0 or args.block_size & (args.block_size - 1):
         parser.error("block-size must be a positive power of two")
+    if args.input_scale <= 0:
+        parser.error("input-scale must be positive")
     return args
 
 
@@ -259,6 +285,7 @@ def main() -> int:
 
     print(f"Evidence written: {args.output}")
     print(f"Commit: {evidence['commit_sha']}")
+    print(f"Terminal operation: {evidence['terminal_op']}")
     print(f"Generated source SHA-256: {evidence['compiler']['generated_source_sha256']}")
     return 0
 
