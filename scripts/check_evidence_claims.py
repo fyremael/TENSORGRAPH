@@ -157,6 +157,103 @@ def _check_gpu_admission(failures: list[str]) -> None:
                 failures.append(f"GPU evidence checksum ledger is missing {expected_sha}")
 
 
+def _check_wp02_contract(failures: list[str]) -> None:
+    _require_fragments(
+        failures,
+        relative="tensorgraph/pipeline/training_elementwise.py",
+        label="WP02 generated backward pipeline",
+        fragments=(
+            "compile_fx_elementwise_training",
+            "generated_backward_source",
+            "backward_source_sha256",
+            "grad_output",
+            "derivative = y * (1.0 - y)",
+            "derivative = 1.0 - y * y",
+            "CUDA is required",
+        ),
+    )
+    _require_fragments(
+        failures,
+        relative="benchmarks/bench_portability_training.py",
+        label="WP02 matrix runner",
+        fragments=(
+            'OPERATIONS = ("sigmoid", "tanh")',
+            'DTYPES = ("float16", "bfloat16", "float32")',
+            '"positive_saturation"',
+            '"negative_saturation"',
+            '"near_zero"',
+            '"mixed_edge"',
+            'DIRECTIONS = ("forward", "forward_backward")',
+            '"disposition": "unsupported"',
+            '"disposition": "failed"',
+            '"promotion_claim": False',
+            '"dirty_worktree": dirty',
+            '"forward_generated_source_sha256"',
+            '"backward_generated_source_sha256"',
+            '"raw_ms"',
+        ),
+    )
+    _require_fragments(
+        failures,
+        relative="scripts/validate_wp02_evidence.py",
+        label="WP02 evidence validator",
+        fragments=(
+            "validate_evidence",
+            "validate_promotion_bundle",
+            "missing requested keys",
+            "source SHA-256 mismatch",
+            "Tesla T4",
+            "Ampere-or-newer",
+            "two exact PyTorch/Triton stacks",
+        ),
+    )
+    _require_fragments(
+        failures,
+        relative="docs/TG_GPU_WP02.md",
+        label="WP02 interpretation charter",
+        fragments=(
+            "no CUDA portability evidence admitted",
+            "60 requested cells",
+            "Exact-source contract",
+            "Promotion gates",
+            "production readiness",
+        ),
+    )
+
+    schema = _load_json(
+        failures,
+        "schemas/tg_gpu_wp02_evidence.schema.json",
+        "WP02 evidence schema",
+    )
+    if schema is not None:
+        properties = schema.get("properties")
+        if not isinstance(properties, dict):
+            failures.append("WP02 evidence schema properties must be an object")
+        else:
+            expected_constants = {
+                "schema": "tensorgraph.evidence.portability-training.v1",
+                "package": "TG-GPU-WP02",
+                "repository": "fyremael/TENSORGRAPH",
+                "dirty_worktree": False,
+                "promotion_claim": False,
+            }
+            for name, expected in expected_constants.items():
+                definition = properties.get(name)
+                if not isinstance(definition, dict) or definition.get("const") != expected:
+                    failures.append(
+                        f"WP02 evidence schema property {name!r} must pin const={expected!r}"
+                    )
+
+    status = (ROOT / "STATUS.md").read_text(encoding="utf-8")
+    for required in (
+        "Generated Sigmoid and Tanh input gradients | experimental",
+        "GPU portability matrix | experimental",
+        "no WP02 CUDA portability or backward evidence is admitted",
+    ):
+        if required not in status:
+            failures.append(f"STATUS.md is missing WP02 boundary: {required!r}")
+
+
 def main() -> int:
     failures: list[str] = []
 
@@ -243,6 +340,7 @@ def main() -> int:
             failures.append(f"verified lowering is missing portable expression: {required}")
 
     _check_gpu_admission(failures)
+    _check_wp02_contract(failures)
 
     if failures:
         print("Evidence/claim policy violations:")

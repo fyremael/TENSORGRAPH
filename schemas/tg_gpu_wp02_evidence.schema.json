@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/fyremael/TENSORGRAPH/schemas/tg_gpu_wp02_evidence.schema.json",
+  "title": "TG-GPU-WP02 portability and training evidence",
+  "type": "object",
+  "required": [
+    "schema",
+    "package",
+    "repository",
+    "timestamp_utc",
+    "commit_sha",
+    "dirty_worktree",
+    "command",
+    "stack_id",
+    "seed",
+    "size",
+    "warmup",
+    "repetitions",
+    "block_size",
+    "request",
+    "versions",
+    "hardware",
+    "tolerances",
+    "compiler",
+    "cells",
+    "matrix_summary",
+    "evidence_complete_for_requested_matrix",
+    "promotion_claim",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema": {"const": "tensorgraph.evidence.portability-training.v1"},
+    "package": {"const": "TG-GPU-WP02"},
+    "repository": {"const": "fyremael/TENSORGRAPH"},
+    "timestamp_utc": {"type": "string", "format": "date-time"},
+    "commit_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "dirty_worktree": {"const": false},
+    "command": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "stack_id": {"type": "string", "minLength": 1},
+    "seed": {"type": "integer"},
+    "size": {"type": "integer", "minimum": 1},
+    "warmup": {"type": "integer", "minimum": 0},
+    "repetitions": {"type": "integer", "minimum": 1},
+    "block_size": {"type": "integer", "minimum": 1},
+    "request": {
+      "type": "object",
+      "required": ["operations", "dtypes", "regimes", "directions"],
+      "properties": {
+        "operations": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"enum": ["sigmoid", "tanh"]},
+          "minItems": 1
+        },
+        "dtypes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"enum": ["float16", "bfloat16", "float32"]},
+          "minItems": 1
+        },
+        "regimes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "moderate",
+              "positive_saturation",
+              "negative_saturation",
+              "near_zero",
+              "mixed_edge"
+            ]
+          },
+          "minItems": 1
+        },
+        "directions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"enum": ["forward", "forward_backward"]},
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "versions": {
+      "type": "object",
+      "required": ["python", "platform", "torch", "triton", "cuda_runtime", "driver"],
+      "additionalProperties": true
+    },
+    "hardware": {
+      "type": "object",
+      "required": [
+        "gpu_index",
+        "gpu_name",
+        "gpu_total_memory_bytes",
+        "gpu_compute_capability",
+        "cpu"
+      ],
+      "properties": {
+        "gpu_index": {"type": "integer", "minimum": 0},
+        "gpu_name": {"type": "string", "minLength": 1},
+        "gpu_total_memory_bytes": {"type": "integer", "minimum": 1},
+        "gpu_compute_capability": {
+          "type": "array",
+          "prefixItems": [{"type": "integer"}, {"type": "integer"}],
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "cpu": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "tolerances": {"type": "object"},
+    "compiler": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/compilerRecord"}
+    },
+    "cells": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/cell"}
+    },
+    "matrix_summary": {
+      "type": "object",
+      "required": [
+        "requested_cells",
+        "recorded_cells",
+        "passed_cells",
+        "unsupported_cells",
+        "failed_cells",
+        "unsupported_keys",
+        "failed_keys"
+      ],
+      "additionalProperties": true
+    },
+    "evidence_complete_for_requested_matrix": {"type": "boolean"},
+    "promotion_claim": {"const": false},
+    "claim_boundary": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "compilerRecord": {
+      "type": "object",
+      "required": ["status"],
+      "oneOf": [
+        {
+          "properties": {
+            "status": {"const": "failed"},
+            "failure_reason": {"type": "string", "minLength": 1}
+          },
+          "required": ["status", "failure_reason"]
+        },
+        {
+          "properties": {
+            "status": {"const": "compiled"},
+            "forward_generated_source": {"type": "string", "minLength": 1},
+            "forward_generated_source_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "backward_generated_source": {"type": "string", "minLength": 1},
+            "backward_generated_source_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "status",
+            "forward_generated_source",
+            "forward_generated_source_sha256",
+            "backward_generated_source",
+            "backward_generated_source_sha256",
+            "forward_phase_ns",
+            "backward_source_generation_ns",
+            "compile_total_ns",
+            "forward_source_load_ns",
+            "backward_source_load_ns"
+          ]
+        }
+      ]
+    },
+    "cell": {
+      "type": "object",
+      "required": [
+        "key",
+        "operation",
+        "dtype",
+        "regime",
+        "direction",
+        "size",
+        "shape",
+        "seed",
+        "disposition",
+        "forward_numerical",
+        "gradient_numerical",
+        "reference_timing",
+        "tensorgraph_timing"
+      ],
+      "properties": {
+        "key": {"type": "string", "minLength": 1},
+        "operation": {"enum": ["sigmoid", "tanh"]},
+        "dtype": {"enum": ["float16", "bfloat16", "float32"]},
+        "regime": {
+          "enum": [
+            "moderate",
+            "positive_saturation",
+            "negative_saturation",
+            "near_zero",
+            "mixed_edge"
+          ]
+        },
+        "direction": {"enum": ["forward", "forward_backward"]},
+        "disposition": {"enum": ["passed", "unsupported", "failed"]}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
