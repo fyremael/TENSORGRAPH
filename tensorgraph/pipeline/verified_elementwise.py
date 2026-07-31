@@ -211,6 +211,7 @@ def _emit_triton(expr: Expr, kernel_name: str = _KERNEL_NAME) -> str:
     Sigmoid and Tanh deliberately lower through ``tl.exp`` arithmetic rather
     than ``tl.sigmoid``. The latter failed during JIT compilation in a Colab
     Triton 3.6.0 environment. ``tl.exp`` keeps these lowerings source-portable.
+    ReLU also preserves NaN values to match PyTorch's forward semantics.
     """
 
     operations: list[str] = []
@@ -246,7 +247,9 @@ def _emit_triton(expr: Expr, kernel_name: str = _KERNEL_NAME) -> str:
 
     for op in operations:
         if op == "ReLU":
-            lines.append("    value = tl.where(value > 0.0, value, 0.0)")
+            lines.append(
+                "    value = tl.where((value > 0.0) | (value != value), value, 0.0)"
+            )
         elif op == "Sigmoid":
             lines.append("    value = 1.0 / (1.0 + tl.exp(-value))")
         elif op == "Tanh":
