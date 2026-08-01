@@ -21,6 +21,7 @@ from typing import Any, Callable
 
 import torch
 
+from tensorgraph.benchmarks.compile_isolation import isolated_graph_dtype_pairs
 from tensorgraph.codegen.native_cuda import NativeCUDAEmitter
 from tensorgraph.ir import Box, Expr, Id, Seq
 from tensorgraph.pipeline.verified_elementwise import (
@@ -344,7 +345,11 @@ def run_matrix(args: argparse.Namespace) -> dict[str, object]:
         raise RuntimeError("WP03 evidence requires a clean worktree")
 
     cells: list[dict[str, object]] = []
-    for graph, dtype_name in itertools.product(args.graphs, args.dtypes):
+    for graph, dtype_name in isolated_graph_dtype_pairs(
+        args.graphs,
+        args.dtypes,
+        torch._dynamo.reset,
+    ):
         operations = GRAPH_OPERATIONS[graph]
         expression = _expression(operations)
         log_domain = "strict_positive" if operations and operations[0] == "Log" else None
@@ -559,6 +564,10 @@ def run_matrix(args: argparse.Namespace) -> dict[str, object]:
             "dtypes": args.dtypes,
             "regimes": args.regimes,
             "launch_modes": args.launch_modes,
+        },
+        "torch_compile_isolation": {
+            "mode": "torch._dynamo.reset_per_graph_family",
+            "graph_families": args.graphs,
         },
         "versions": {
             "python": sys.version,

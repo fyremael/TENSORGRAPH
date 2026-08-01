@@ -75,6 +75,10 @@ def _document() -> dict[str, object]:
             "regimes": ["moderate"],
             "launch_modes": ["ordinary"],
         },
+        "torch_compile_isolation": {
+            "mode": "torch._dynamo.reset_per_graph_family",
+            "graph_families": ["relu"],
+        },
         "versions": {},
         "hardware": {
             "gpu_index": 0,
@@ -112,6 +116,8 @@ def test_wp03_validator_accepts_complete_bounded_artifact() -> None:
         "missing_baseline",
         "derived_timing",
         "numerical_failure",
+        "missing_compile_isolation",
+        "mismatched_compile_isolation",
     ],
 )
 def test_wp03_validator_rejects_adversarial_mutations(mutation: str) -> None:
@@ -143,6 +149,12 @@ def test_wp03_validator_rejects_adversarial_mutations(mutation: str) -> None:
         numerical = cell["numerical"]
         assert isinstance(numerical, dict)
         numerical["passed"] = False
+    elif mutation == "missing_compile_isolation":
+        del document["torch_compile_isolation"]
+    elif mutation == "mismatched_compile_isolation":
+        isolation = document["torch_compile_isolation"]
+        assert isinstance(isolation, dict)
+        isolation["graph_families"] = ["tanh"]
     else:  # pragma: no cover
         raise AssertionError(mutation)
 
