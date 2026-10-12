@@ -86,6 +86,17 @@ def validate(document: Any) -> None:
         _require(len(value) == len(set(value)), f"request.{name} contains duplicates")
     _require(set(launch_modes) <= _LAUNCH_MODES, "request contains an unknown launch mode")
 
+    isolation = document.get("torch_compile_isolation")
+    _require(isinstance(isolation, dict), "torch_compile_isolation must be an object")
+    _require(
+        isolation.get("mode") == "torch._dynamo.reset_per_graph_family",
+        "torch.compile graph-family isolation mode is missing or unsupported",
+    )
+    _require(
+        isolation.get("graph_families") == graphs,
+        "torch.compile isolation graph families do not match the request",
+    )
+
     expected_keys = {
         f"{graph}__{dtype}__{regime}__{launch_mode}"
         for graph, dtype, regime, launch_mode in itertools.product(

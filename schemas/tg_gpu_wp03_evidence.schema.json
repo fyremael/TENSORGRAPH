@@ -17,6 +17,7 @@
     "warmup",
     "repetitions",
     "request",
+    "torch_compile_isolation",
     "versions",
     "hardware",
     "cells",
@@ -56,6 +57,20 @@
         }
       },
       "additionalProperties": false
+    },
+    "torch_compile_isolation": {
+      "type": "object",
+      "required": ["mode", "graph_families"],
+      "additionalProperties": false,
+      "properties": {
+        "mode": {"const": "torch._dynamo.reset_per_graph_family"},
+        "graph_families": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
     },
     "versions": {"type": "object", "additionalProperties": true},
     "hardware": {
