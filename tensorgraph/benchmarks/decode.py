@@ -25,6 +25,8 @@ def main():
     parser.add_argument("--repetitions", type=int, default=1000)
     parser.add_argument("--rounds", type=int, default=5)
     args = parser.parse_args()
+    if args.repetitions < 1000 or args.rounds < 5:
+        parser.error("at least 1000 repetitions and five rounds are required")
     out = args.output
     out.mkdir(parents=True, exist_ok=False)
 
@@ -54,6 +56,8 @@ def main():
         "cuda": torch.version.cuda,
         "triton": triton.__version__,
         "nvcc": nvcc,
+        "ninja": shell("ninja", "--version"),
+        "cxx": shell("c++", "--version"),
         "gpu": device,
         "driver": shell("nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"),
         "seed": 731,

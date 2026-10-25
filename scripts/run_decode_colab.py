@@ -42,6 +42,7 @@ status={{'returncode':1,'commit':{commit!r}}}
 try:
     subprocess.run(['git','clone','https://github.com/fyremael/TENSORGRAPH.git','/content/tensorgraph'],check=True)
     subprocess.run(['git','checkout',{commit!r}],cwd='/content/tensorgraph',check=True)
+    subprocess.run([sys.executable,'-m','pip','install','ninja'],check=True)
     import torch
     if torch.__version__ != '2.11.0+cu130':
         raise RuntimeError('Unexpected PyTorch build: '+torch.__version__)
