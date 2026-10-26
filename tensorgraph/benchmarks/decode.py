@@ -85,14 +85,15 @@ def main():
     def checked(fn, x, r, w, a, b, label):
         before = [t.clone() for t in (x, r, w)]
         fn()
-        s = x.double() + r.double()
-        oracle = (s, s * torch.rsqrt((s * s).mean(-1, keepdim=True) + 1e-5) * w.double())
+        # CPU FP64 oracle is independent of CUDA reduction implementation.
+        s = x.cpu().double() + r.cpu().double()
+        oracle = (s, s * torch.rsqrt((s * s).mean(-1, keepdim=True) + 1e-5) * w.cpu().double())
         sf = x.float() + r.float()
         staged = (sf, sf * torch.rsqrt((sf * sf).mean(-1, keepdim=True) + 1e-5) * w.float())
         atol, rtol = doc["tolerance"][str(x.dtype).split(".")[-1]]
         metrics = []
         for got, ref, fp in zip((a, b), oracle, staged, strict=False):
-            expected = ref.to(got.dtype)
+            expected = ref.to(device=got.device, dtype=got.dtype)
             err = (got.double() - expected.double()).abs()
             metrics.append(
                 {
@@ -146,6 +147,8 @@ def main():
         for h in (1024, 4096, 8192):
             t = time.perf_counter_ns()
             graph = DecodeGraph(dtype_name, h)
+            admission_ns = time.perf_counter_ns() - t
+            t = time.perf_counter_ns()
             artifact = graph.emit()
             generation = time.perf_counter_ns() - t
             build = out / f"build-{dtype_name}-{h}"
@@ -162,6 +165,7 @@ def main():
                     "source_sha256": artifact["source_sha256"],
                     "graph_sha256": artifact["graph_sha256"],
                     "generation_ns": generation,
+                    "ir_construction_admission_ns": admission_ns,
                     "compile_load_ns": compile_ns,
                     "records": [],
                     "numerical": [],
@@ -371,11 +375,18 @@ def main():
                                     "synchronized_host_ns": host,
                                 }
                             )
+                cell["changed_input_replays_per_backend"] = 100
+                cell["nonfinite_and_alias_gates_passed"] = True
+                cell["completed"] = True
                 save()
                 print("CELL PASSED", dtype_name, batch, h, flush=True)
                 del captures, backends
                 torch.cuda.empty_cache()
-    doc["passed"] = len(doc["cells"]) == 27 and not doc["failures"]
+    doc["passed"] = (
+        len(doc["cells"]) == 27
+        and all(c.get("completed") for c in doc["cells"])
+        and not doc["failures"]
+    )
     save()
 
 
