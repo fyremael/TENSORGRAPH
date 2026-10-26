@@ -1,0 +1,1402 @@
+{
+  "gpu": "NVIDIA A100-SXM4-40GB",
+  "commit": "59210359907c47c73f95304cb17454558daa6f5a",
+  "archive_path": "/home/jim/gcl-research/qkv-performance-artifacts/A100/export.zip",
+  "archive_sha256": "6b67939c90e2f56f57feaf7439a67777715d99f64a3845028ae54d8d73acf4b7",
+  "precision": {
+    "tf32": false,
+    "reduced_precision_reduction": false
+  },
+  "cells": [
+    {
+      "dtype": "float16",
+      "batch": 1,
+      "hidden": 1024,
+      "allocation": {
+        "whole_eager_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_eager_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_native_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_native_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_inductor-ordinary": {
+          "peak_extra_bytes": 8192,
+          "positive_cuda_memory_events": 6,
+          "positive_cuda_bytes": 24576,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_inductor-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_inductor-ordinary": {
+          "peak_extra_bytes": 6144,
+          "positive_cuda_memory_events": 3,
+          "positive_cuda_bytes": 18432,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_inductor-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        }
+      },
+      "timing": {
+        "whole_eager_library": {
+          "ordinary_host": {
+            "median_us": 235.663,
+            "samples": 5000,
+            "p95_us": 257.015,
+            "p99_us": 286.304
+          },
+          "graph_host": {
+            "median_us": 53.658500000000004,
+            "samples": 5000,
+            "p95_us": 60.142,
+            "p99_us": 66.105
+          },
+          "device_batch": {
+            "median_us": 41.43503952026367,
+            "samples": 5
+          }
+        },
+        "whole_native_library": {
+          "ordinary_host": {
+            "median_us": 63.1205,
+            "samples": 5000,
+            "p95_us": 78.314,
+            "p99_us": 85.447
+          },
+          "graph_host": {
+            "median_us": 27.2175,
+            "samples": 5000,
+            "p95_us": 30.426,
+            "p99_us": 35.042
+          },
+          "device_batch": {
+            "median_us": 12.590815544128418,
+            "samples": 5
+          }
+        },
+        "whole_inductor": {
+          "ordinary_host": {
+            "median_us": 228.60750000000002,
+            "samples": 5000,
+            "p95_us": 247.039,
+            "p99_us": 272.088
+          },
+          "graph_host": {
+            "median_us": 27.579,
+            "samples": 5000,
+            "p95_us": 31.425,
+            "p99_us": 35.532
+          },
+          "device_batch": {
+            "median_us": 12.721792221069336,
+            "samples": 5
+          }
+        },
+        "projection_library": {
+          "ordinary_host": {
+            "median_us": 37.798,
+            "samples": 5000,
+            "p95_us": 46.431,
+            "p99_us": 52.618
+          },
+          "graph_host": {
+            "median_us": 23.225,
+            "samples": 5000,
+            "p95_us": 26.77,
+            "p99_us": 31.178
+          },
+          "device_batch": {
+            "median_us": 8.229056358337402,
+            "samples": 5
+          }
+        },
+        "projection_inductor": {
+          "ordinary_host": {
+            "median_us": 189.6875,
+            "samples": 5000,
+            "p95_us": 208.849,
+            "p99_us": 220.69
+          },
+          "graph_host": {
+            "median_us": 24.9535,
+            "samples": 5000,
+            "p95_us": 28.958,
+            "p99_us": 35.1
+          },
+          "device_batch": {
+            "median_us": 10.289823532104492,
+            "samples": 5
+          }
+        }
+      }
+    },
+    {
+      "dtype": "float16",
+      "batch": 4,
+      "hidden": 1024,
+      "allocation": {
+        "whole_eager_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_eager_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_native_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_native_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_inductor-ordinary": {
+          "peak_extra_bytes": 32768,
+          "positive_cuda_memory_events": 6,
+          "positive_cuda_bytes": 98304,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_inductor-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_inductor-ordinary": {
+          "peak_extra_bytes": 24576,
+          "positive_cuda_memory_events": 3,
+          "positive_cuda_bytes": 73728,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_inductor-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        }
+      },
+      "timing": {
+        "whole_eager_library": {
+          "ordinary_host": {
+            "median_us": 238.0895,
+            "samples": 5000,
+            "p95_us": 257.695,
+            "p99_us": 279.061
+          },
+          "graph_host": {
+            "median_us": 52.0715,
+            "samples": 5000,
+            "p95_us": 62.405,
+            "p99_us": 66.733
+          },
+          "device_batch": {
+            "median_us": 40.39817428588867,
+            "samples": 5
+          }
+        },
+        "whole_native_library": {
+          "ordinary_host": {
+            "median_us": 63.0155,
+            "samples": 5000,
+            "p95_us": 78.761,
+            "p99_us": 84.827
+          },
+          "graph_host": {
+            "median_us": 26.255,
+            "samples": 5000,
+            "p95_us": 30.475,
+            "p99_us": 34.203
+          },
+          "device_batch": {
+            "median_us": 11.6461763381958,
+            "samples": 5
+          }
+        },
+        "whole_inductor": {
+          "ordinary_host": {
+            "median_us": 229.20800000000003,
+            "samples": 5000,
+            "p95_us": 248.26,
+            "p99_us": 270.655
+          },
+          "graph_host": {
+            "median_us": 26.8435,
+            "samples": 5000,
+            "p95_us": 31.243,
+            "p99_us": 35.054
+          },
+          "device_batch": {
+            "median_us": 12.530400276184082,
+            "samples": 5
+          }
+        },
+        "projection_library": {
+          "ordinary_host": {
+            "median_us": 37.777,
+            "samples": 5000,
+            "p95_us": 46.542,
+            "p99_us": 51.5
+          },
+          "graph_host": {
+            "median_us": 22.922,
+            "samples": 5000,
+            "p95_us": 26.937,
+            "p99_us": 31.118
+          },
+          "device_batch": {
+            "median_us": 8.024640083312988,
+            "samples": 5
+          }
+        },
+        "projection_inductor": {
+          "ordinary_host": {
+            "median_us": 189.12650000000002,
+            "samples": 5000,
+            "p95_us": 209.338,
+            "p99_us": 224.626
+          },
+          "graph_host": {
+            "median_us": 24.989,
+            "samples": 5000,
+            "p95_us": 29.21,
+            "p99_us": 34.319
+          },
+          "device_batch": {
+            "median_us": 10.225567817687988,
+            "samples": 5
+          }
+        }
+      }
+    },
+    {
+      "dtype": "float16",
+      "batch": 1,
+      "hidden": 4096,
+      "allocation": {
+        "whole_eager_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_eager_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_native_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_native_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_inductor-ordinary": {
+          "peak_extra_bytes": 32768,
+          "positive_cuda_memory_events": 6,
+          "positive_cuda_bytes": 98304,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_inductor-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_inductor-ordinary": {
+          "peak_extra_bytes": 24576,
+          "positive_cuda_memory_events": 3,
+          "positive_cuda_bytes": 73728,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_inductor-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        }
+      },
+      "timing": {
+        "whole_eager_library": {
+          "ordinary_host": {
+            "median_us": 288.282,
+            "samples": 5000,
+            "p95_us": 302.843,
+            "p99_us": 322.175
+          },
+          "graph_host": {
+            "median_us": 123.719,
+            "samples": 5000,
+            "p95_us": 126.347,
+            "p99_us": 131.337
+          },
+          "device_batch": {
+            "median_us": 110.80143737792969,
+            "samples": 5
+          }
+        },
+        "whole_native_library": {
+          "ordinary_host": {
+            "median_us": 124.7435,
+            "samples": 5000,
+            "p95_us": 135.88,
+            "p99_us": 140.995
+          },
+          "graph_host": {
+            "median_us": 104.223,
+            "samples": 5000,
+            "p95_us": 106.526,
+            "p99_us": 111.298
+          },
+          "device_batch": {
+            "median_us": 88.51932525634766,
+            "samples": 5
+          }
+        },
+        "whole_inductor": {
+          "ordinary_host": {
+            "median_us": 241.3935,
+            "samples": 5000,
+            "p95_us": 260.537,
+            "p99_us": 290.761
+          },
+          "graph_host": {
+            "median_us": 97.664,
+            "samples": 5000,
+            "p95_us": 100.328,
+            "p99_us": 105.765
+          },
+          "device_batch": {
+            "median_us": 82.1827163696289,
+            "samples": 5
+          }
+        },
+        "projection_library": {
+          "ordinary_host": {
+            "median_us": 102.683,
+            "samples": 5000,
+            "p95_us": 108.952,
+            "p99_us": 116.193
+          },
+          "graph_host": {
+            "median_us": 92.105,
+            "samples": 5000,
+            "p95_us": 94.18,
+            "p99_us": 99.132
+          },
+          "device_batch": {
+            "median_us": 76.29625701904297,
+            "samples": 5
+          }
+        },
+        "projection_inductor": {
+          "ordinary_host": {
+            "median_us": 200.736,
+            "samples": 5000,
+            "p95_us": 218.725,
+            "p99_us": 245.576
+          },
+          "graph_host": {
+            "median_us": 94.508,
+            "samples": 5000,
+            "p95_us": 96.577,
+            "p99_us": 102.021
+          },
+          "device_batch": {
+            "median_us": 78.47913360595703,
+            "samples": 5
+          }
+        }
+      }
+    },
+    {
+      "dtype": "float16",
+      "batch": 4,
+      "hidden": 4096,
+      "allocation": {
+        "whole_eager_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_eager_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_native_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_native_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_inductor-ordinary": {
+          "peak_extra_bytes": 131072,
+          "positive_cuda_memory_events": 6,
+          "positive_cuda_bytes": 393216,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_inductor-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_inductor-ordinary": {
+          "peak_extra_bytes": 98304,
+          "positive_cuda_memory_events": 3,
+          "positive_cuda_bytes": 294912,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_inductor-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        }
+      },
+      "timing": {
+        "whole_eager_library": {
+          "ordinary_host": {
+            "median_us": 289.56,
+            "samples": 5000,
+            "p95_us": 303.369,
+            "p99_us": 310.276
+          },
+          "graph_host": {
+            "median_us": 126.9315,
+            "samples": 5000,
+            "p95_us": 129.795,
+            "p99_us": 134.67
+          },
+          "device_batch": {
+            "median_us": 115.24668884277344,
+            "samples": 5
+          }
+        },
+        "whole_native_library": {
+          "ordinary_host": {
+            "median_us": 124.692,
+            "samples": 5000,
+            "p95_us": 135.617,
+            "p99_us": 142.66
+          },
+          "graph_host": {
+            "median_us": 104.152,
+            "samples": 5000,
+            "p95_us": 107.177,
+            "p99_us": 111.817
+          },
+          "device_batch": {
+            "median_us": 90.30089569091797,
+            "samples": 5
+          }
+        },
+        "whole_inductor": {
+          "ordinary_host": {
+            "median_us": 240.156,
+            "samples": 5000,
+            "p95_us": 258.467,
+            "p99_us": 269.881
+          },
+          "graph_host": {
+            "median_us": 99.122,
+            "samples": 5000,
+            "p95_us": 104.151,
+            "p99_us": 109.632
+          },
+          "device_batch": {
+            "median_us": 84.73197174072266,
+            "samples": 5
+          }
+        },
+        "projection_library": {
+          "ordinary_host": {
+            "median_us": 103.591,
+            "samples": 5000,
+            "p95_us": 109.715,
+            "p99_us": 115.536
+          },
+          "graph_host": {
+            "median_us": 93.485,
+            "samples": 5000,
+            "p95_us": 96.765,
+            "p99_us": 101.669
+          },
+          "device_batch": {
+            "median_us": 78.9260482788086,
+            "samples": 5
+          }
+        },
+        "projection_inductor": {
+          "ordinary_host": {
+            "median_us": 199.39749999999998,
+            "samples": 5000,
+            "p95_us": 215.781,
+            "p99_us": 223.974
+          },
+          "graph_host": {
+            "median_us": 96.087,
+            "samples": 5000,
+            "p95_us": 98.53,
+            "p99_us": 103.102
+          },
+          "device_batch": {
+            "median_us": 81.32252502441406,
+            "samples": 5
+          }
+        }
+      }
+    },
+    {
+      "dtype": "bfloat16",
+      "batch": 1,
+      "hidden": 1024,
+      "allocation": {
+        "whole_eager_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_eager_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_native_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_native_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_inductor-ordinary": {
+          "peak_extra_bytes": 8192,
+          "positive_cuda_memory_events": 6,
+          "positive_cuda_bytes": 24576,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_inductor-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_inductor-ordinary": {
+          "peak_extra_bytes": 6144,
+          "positive_cuda_memory_events": 3,
+          "positive_cuda_bytes": 18432,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_inductor-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        }
+      },
+      "timing": {
+        "whole_eager_library": {
+          "ordinary_host": {
+            "median_us": 234.81150000000002,
+            "samples": 5000,
+            "p95_us": 250.447,
+            "p99_us": 259.692
+          },
+          "graph_host": {
+            "median_us": 54.558499999999995,
+            "samples": 5000,
+            "p95_us": 59.856,
+            "p99_us": 64.568
+          },
+          "device_batch": {
+            "median_us": 42.54671859741211,
+            "samples": 5
+          }
+        },
+        "whole_native_library": {
+          "ordinary_host": {
+            "median_us": 62.701499999999996,
+            "samples": 5000,
+            "p95_us": 77.644,
+            "p99_us": 88.226
+          },
+          "graph_host": {
+            "median_us": 27.082,
+            "samples": 5000,
+            "p95_us": 30.362,
+            "p99_us": 36.031
+          },
+          "device_batch": {
+            "median_us": 12.238271713256836,
+            "samples": 5
+          }
+        },
+        "whole_inductor": {
+          "ordinary_host": {
+            "median_us": 228.969,
+            "samples": 5000,
+            "p95_us": 248.62,
+            "p99_us": 272.636
+          },
+          "graph_host": {
+            "median_us": 27.0395,
+            "samples": 5000,
+            "p95_us": 31.052,
+            "p99_us": 36.649
+          },
+          "device_batch": {
+            "median_us": 12.404191970825195,
+            "samples": 5
+          }
+        },
+        "projection_library": {
+          "ordinary_host": {
+            "median_us": 38.036,
+            "samples": 5000,
+            "p95_us": 46.083,
+            "p99_us": 54.577
+          },
+          "graph_host": {
+            "median_us": 23.0155,
+            "samples": 5000,
+            "p95_us": 27.437,
+            "p99_us": 34.715
+          },
+          "device_batch": {
+            "median_us": 8.075488090515137,
+            "samples": 5
+          }
+        },
+        "projection_inductor": {
+          "ordinary_host": {
+            "median_us": 189.851,
+            "samples": 5000,
+            "p95_us": 214.056,
+            "p99_us": 233.979
+          },
+          "graph_host": {
+            "median_us": 24.773,
+            "samples": 5000,
+            "p95_us": 28.496,
+            "p99_us": 33.236
+          },
+          "device_batch": {
+            "median_us": 10.150431632995605,
+            "samples": 5
+          }
+        }
+      }
+    },
+    {
+      "dtype": "bfloat16",
+      "batch": 4,
+      "hidden": 1024,
+      "allocation": {
+        "whole_eager_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_eager_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_native_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_native_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_inductor-ordinary": {
+          "peak_extra_bytes": 32768,
+          "positive_cuda_memory_events": 6,
+          "positive_cuda_bytes": 98304,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_inductor-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_inductor-ordinary": {
+          "peak_extra_bytes": 24576,
+          "positive_cuda_memory_events": 3,
+          "positive_cuda_bytes": 73728,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_inductor-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        }
+      },
+      "timing": {
+        "whole_eager_library": {
+          "ordinary_host": {
+            "median_us": 236.964,
+            "samples": 5000,
+            "p95_us": 258.385,
+            "p99_us": 266.818
+          },
+          "graph_host": {
+            "median_us": 59.427,
+            "samples": 5000,
+            "p95_us": 63.838,
+            "p99_us": 68.586
+          },
+          "device_batch": {
+            "median_us": 47.068031311035156,
+            "samples": 5
+          }
+        },
+        "whole_native_library": {
+          "ordinary_host": {
+            "median_us": 62.838499999999996,
+            "samples": 5000,
+            "p95_us": 77.973,
+            "p99_us": 86.684
+          },
+          "graph_host": {
+            "median_us": 27.118,
+            "samples": 5000,
+            "p95_us": 30.661,
+            "p99_us": 36.549
+          },
+          "device_batch": {
+            "median_us": 12.18614387512207,
+            "samples": 5
+          }
+        },
+        "whole_inductor": {
+          "ordinary_host": {
+            "median_us": 232.62900000000002,
+            "samples": 5000,
+            "p95_us": 253.082,
+            "p99_us": 269.527
+          },
+          "graph_host": {
+            "median_us": 29.638,
+            "samples": 5000,
+            "p95_us": 31.878,
+            "p99_us": 37.208
+          },
+          "device_batch": {
+            "median_us": 14.671520233154297,
+            "samples": 5
+          }
+        },
+        "projection_library": {
+          "ordinary_host": {
+            "median_us": 38.1155,
+            "samples": 5000,
+            "p95_us": 46.673,
+            "p99_us": 54.172
+          },
+          "graph_host": {
+            "median_us": 22.945,
+            "samples": 5000,
+            "p95_us": 26.905,
+            "p99_us": 34.295
+          },
+          "device_batch": {
+            "median_us": 8.023615837097168,
+            "samples": 5
+          }
+        },
+        "projection_inductor": {
+          "ordinary_host": {
+            "median_us": 193.909,
+            "samples": 5000,
+            "p95_us": 218.64,
+            "p99_us": 239.692
+          },
+          "graph_host": {
+            "median_us": 25.5655,
+            "samples": 5000,
+            "p95_us": 28.871,
+            "p99_us": 36.471
+          },
+          "device_batch": {
+            "median_us": 10.74937629699707,
+            "samples": 5
+          }
+        }
+      }
+    },
+    {
+      "dtype": "bfloat16",
+      "batch": 1,
+      "hidden": 4096,
+      "allocation": {
+        "whole_eager_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_eager_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_native_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_native_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_inductor-ordinary": {
+          "peak_extra_bytes": 32768,
+          "positive_cuda_memory_events": 6,
+          "positive_cuda_bytes": 98304,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_inductor-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_inductor-ordinary": {
+          "peak_extra_bytes": 24576,
+          "positive_cuda_memory_events": 3,
+          "positive_cuda_bytes": 73728,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_inductor-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        }
+      },
+      "timing": {
+        "whole_eager_library": {
+          "ordinary_host": {
+            "median_us": 289.124,
+            "samples": 5000,
+            "p95_us": 302.975,
+            "p99_us": 314.928
+          },
+          "graph_host": {
+            "median_us": 124.169,
+            "samples": 5000,
+            "p95_us": 126.772,
+            "p99_us": 131.777
+          },
+          "device_batch": {
+            "median_us": 111.12409973144531,
+            "samples": 5
+          }
+        },
+        "whole_native_library": {
+          "ordinary_host": {
+            "median_us": 124.9545,
+            "samples": 5000,
+            "p95_us": 137.006,
+            "p99_us": 143.815
+          },
+          "graph_host": {
+            "median_us": 104.369,
+            "samples": 5000,
+            "p95_us": 107.126,
+            "p99_us": 111.976
+          },
+          "device_batch": {
+            "median_us": 88.52397155761719,
+            "samples": 5
+          }
+        },
+        "whole_inductor": {
+          "ordinary_host": {
+            "median_us": 237.30149999999998,
+            "samples": 5000,
+            "p95_us": 255.529,
+            "p99_us": 273.073
+          },
+          "graph_host": {
+            "median_us": 97.643,
+            "samples": 5000,
+            "p95_us": 100.189,
+            "p99_us": 104.584
+          },
+          "device_batch": {
+            "median_us": 81.99059295654297,
+            "samples": 5
+          }
+        },
+        "projection_library": {
+          "ordinary_host": {
+            "median_us": 102.569,
+            "samples": 5000,
+            "p95_us": 107.886,
+            "p99_us": 113.133
+          },
+          "graph_host": {
+            "median_us": 92.04650000000001,
+            "samples": 5000,
+            "p95_us": 94.151,
+            "p99_us": 98.665
+          },
+          "device_batch": {
+            "median_us": 76.22486114501953,
+            "samples": 5
+          }
+        },
+        "projection_inductor": {
+          "ordinary_host": {
+            "median_us": 197.24200000000002,
+            "samples": 5000,
+            "p95_us": 214.74,
+            "p99_us": 225.659
+          },
+          "graph_host": {
+            "median_us": 94.6255,
+            "samples": 5000,
+            "p95_us": 96.848,
+            "p99_us": 103.054
+          },
+          "device_batch": {
+            "median_us": 78.50153350830078,
+            "samples": 5
+          }
+        }
+      }
+    },
+    {
+      "dtype": "bfloat16",
+      "batch": 4,
+      "hidden": 4096,
+      "allocation": {
+        "whole_eager_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_eager_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_native_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_native_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_inductor-ordinary": {
+          "peak_extra_bytes": 131072,
+          "positive_cuda_memory_events": 6,
+          "positive_cuda_bytes": 393216,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "whole_inductor-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_library-ordinary": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_library-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_inductor-ordinary": {
+          "peak_extra_bytes": 98304,
+          "positive_cuda_memory_events": 3,
+          "positive_cuda_bytes": 294912,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        },
+        "projection_inductor-replay": {
+          "peak_extra_bytes": 0,
+          "positive_cuda_memory_events": 0,
+          "positive_cuda_bytes": 0,
+          "allocation_api_events": [],
+          "profiled_calls": 3
+        }
+      },
+      "timing": {
+        "whole_eager_library": {
+          "ordinary_host": {
+            "median_us": 290.6175,
+            "samples": 5000,
+            "p95_us": 305.819,
+            "p99_us": 326.642
+          },
+          "graph_host": {
+            "median_us": 127.35900000000001,
+            "samples": 5000,
+            "p95_us": 130.537,
+            "p99_us": 135.889
+          },
+          "device_batch": {
+            "median_us": 115.70543670654297,
+            "samples": 5
+          }
+        },
+        "whole_native_library": {
+          "ordinary_host": {
+            "median_us": 125.00450000000001,
+            "samples": 5000,
+            "p95_us": 138.321,
+            "p99_us": 153.043
+          },
+          "graph_host": {
+            "median_us": 104.33,
+            "samples": 5000,
+            "p95_us": 107.522,
+            "p99_us": 111.809
+          },
+          "device_batch": {
+            "median_us": 90.24761962890625,
+            "samples": 5
+          }
+        },
+        "whole_inductor": {
+          "ordinary_host": {
+            "median_us": 237.4365,
+            "samples": 5000,
+            "p95_us": 255.068,
+            "p99_us": 275.265
+          },
+          "graph_host": {
+            "median_us": 99.394,
+            "samples": 5000,
+            "p95_us": 103.129,
+            "p99_us": 107.549
+          },
+          "device_batch": {
+            "median_us": 84.72454071044922,
+            "samples": 5
+          }
+        },
+        "projection_library": {
+          "ordinary_host": {
+            "median_us": 103.592,
+            "samples": 5000,
+            "p95_us": 109.969,
+            "p99_us": 117.464
+          },
+          "graph_host": {
+            "median_us": 93.668,
+            "samples": 5000,
+            "p95_us": 96.444,
+            "p99_us": 100.503
+          },
+          "device_batch": {
+            "median_us": 78.94236755371094,
+            "samples": 5
+          }
+        },
+        "projection_inductor": {
+          "ordinary_host": {
+            "median_us": 197.8095,
+            "samples": 5000,
+            "p95_us": 214.778,
+            "p99_us": 237.002
+          },
+          "graph_host": {
+            "median_us": 96.235,
+            "samples": 5000,
+            "p95_us": 99.162,
+            "p99_us": 103.735
+          },
+          "device_batch": {
+            "median_us": 81.33904266357422,
+            "samples": 5
+          }
+        }
+      }
+    }
+  ],
+  "archive_crc_and_source_check": true,
+  "aggregate": {
+    "ordinary_host": {
+      "whole_eager_library": 263.18575,
+      "whole_native_library": 93.90625,
+      "whole_inductor": 234.96525,
+      "projection_library": 70.34225,
+      "projection_inductor": 195.5755
+    },
+    "graph_host": {
+      "whole_eager_library": 91.573,
+      "whole_native_library": 65.68475000000001,
+      "whole_inductor": 63.6405,
+      "projection_library": 57.63575,
+      "projection_inductor": 60.03675
+    },
+    "device_batch": {
+      "whole_eager_library": 78.93473434448242,
+      "whole_native_library": 50.55507040023804,
+      "whole_inductor": 48.33105659484863,
+      "projection_library": 42.22695875167847,
+      "projection_inductor": 44.61425495147705
+    }
+  },
+  "ordinary_allocation_cases": {
+    "whole_eager_library": 0,
+    "whole_native_library": 0,
+    "whole_inductor": 8,
+    "projection_library": 0,
+    "projection_inductor": 8
+  },
+  "replay_allocation_cases": {
+    "whole_eager_library": 0,
+    "whole_native_library": 0,
+    "whole_inductor": 0,
+    "projection_library": 0,
+    "projection_inductor": 0
+  }
+}

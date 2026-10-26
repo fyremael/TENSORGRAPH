@@ -1,0 +1,18 @@
+{
+  "workload_commit": "59210359907c47c73f95304cb17454558daa6f5a",
+  "completed_gpus": [
+    "A100",
+    "L4"
+  ],
+  "T4_excluded": true,
+  "cases_per_gpu": 8,
+  "host_samples_total": 800000,
+  "device_batch_intervals_total": 400,
+  "invocations_per_device_batch": 1000,
+  "numerical_and_archive_audit_passed": true,
+  "cleanup_readback": "no active Colab sessions",
+  "cleanup_control_receipt": "40a2934c84e44f75b7b6770c2ae98d32",
+  "L4_recovery": "/home/jim/gcl-research/qkv-performance-artifacts/L4/recovery-1/dispatch.json",
+  "ordinary_inductor_allocation_matched": false,
+  "observed_replay_allocator_activity": false
+}

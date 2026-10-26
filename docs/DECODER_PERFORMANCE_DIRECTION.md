@@ -68,3 +68,11 @@ Retain compiler source, stack, source hashes, raw samples and failed cases.
 Compare normalization-only, projection-only, and whole-subgraph measurements in
 that experiment as attribution controls, not a renewed standalone tuning sweep.
 Proceed to attention/KV-cache work only after this boundary is understood.
+
+## Whole-subgraph performance measurement completed
+
+The A100/L4 whole-subgraph and projection-only latency/allocation study is complete.
+See [QKV performance review](../evidence/qkv-performance/README.md).
+Captured execution shows small-shape crossovers and no general native advantage
+over Inductor; projection dominates the wider tested cases. Ordinary Inductor
+allocations remain explicit exclusions from allocation-matched speedup claims.
