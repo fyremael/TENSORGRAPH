@@ -49,8 +49,9 @@ observe the same normalization storage rounding before projection.
 lane setup. The native lane deliberately composes the existing generated native
 normalization with a library matrix multiply. It must be labeled mixed backend,
 not an all-generated native projection kernel. The eager baseline uses the same
-library multiply; Inductor compiles the whole declared subgraph. No performance
-or numerical execution claim is made for this new setup yet.
+library multiply; Inductor compiles the whole declared subgraph. Numerical GPU validation subsequently passed the bounded A100/L4 matrix; see
+[evidence/qkv-validation](../evidence/qkv-validation/README.md). No performance
+claim is made for this new setup.
 
 Initial bounded matrix: B={1,4}, H={1024,4096}, float16/bfloat16, A100 and L4.
 Keep weights resident, allocate outputs/workspaces before timing, and audit actual
