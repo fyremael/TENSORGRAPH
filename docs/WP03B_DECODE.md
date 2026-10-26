@@ -1,5 +1,9 @@
 # WP03-B residual and weighted RMSNorm experiment
 
+Standalone performance tuning is shelved. The correct native backend is retained.
+See [Decoder performance direction](DECODER_PERFORMANCE_DIRECTION.md) for the
+WP03-C outcome and the active residual/RMSNorm/QKV projection target.
+
 Experimental bounded typed DAG lowering, tracked in issue #11. This adds a
 multi-input, row-reduction path alongside the existing unary backend. It does
 not yet feed the general diagram IR or equality-saturation engine.
