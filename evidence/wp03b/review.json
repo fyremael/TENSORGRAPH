@@ -1,0 +1,71 @@
+{
+  "schema": "TG-WP03-B-REVIEW/1",
+  "workload_commit": "79ae02de0e7da74529c4f93d9029b19e828b176b",
+  "workload": "residual update plus weighted RMSNorm; FP32 arithmetic; two persistent outputs",
+  "status": "GPU execution completed; experimental; no capability promotion",
+  "gpus": [
+    "A100",
+    "L4"
+  ],
+  "T4_excluded": true,
+  "shape_dtype_cases": 54,
+  "backend_checks": 216,
+  "raw_timing_samples": 3240000,
+  "changed_input_replay_checks": 21600,
+  "allocation_eligibility": {
+    "native": {
+      "ordinary_eligible_per_gpu": 27
+    },
+    "direct_cuda": {
+      "ordinary_eligible_per_gpu": 27
+    },
+    "eager": {
+      "ordinary_eligible_per_gpu": 27
+    },
+    "inductor": {
+      "ordinary_eligible_per_gpu": 9,
+      "ordinary_excluded_per_gpu": 18,
+      "excluded_hidden": [
+        4096,
+        8192
+      ],
+      "reason": "one timed temporary allocation in profiled ordinary call"
+    }
+  },
+  "no_active_colab_sessions": true,
+  "raw_archives": [
+    {
+      "gpu": "NVIDIA A100-SXM4-40GB",
+      "path": "/home/jim/gcl-research/wp03b-artifacts/A100/export.zip",
+      "sha256": "db993381a9ac4e4f39ef9a5e4c06b817b27a32f370a5cbbb810058e2c63ccdd6",
+      "evidence_json_sha256": "e1bcbf1fedb16bff88e532e6df8854873e8feed2bdb537c159d102301c8e80b4"
+    },
+    {
+      "gpu": "NVIDIA L4",
+      "path": "/home/jim/gcl-research/wp03b-artifacts/L4/export.zip",
+      "sha256": "a054e7a0e68e757aee2e269978d213f074f2310f1dce0d14eccd18451bbceefa",
+      "evidence_json_sha256": "47b848f511b5f157d231eeddd0e1bd0ae180453afa21a67434fc5dd83288c408"
+    }
+  ],
+  "review_checks": [
+    "complete shape/dtype/backend/mode/round keys",
+    "1000 samples per round, five rounds",
+    "clean workload checkout",
+    "exact Torch/CUDA/NVCC/Triton gate",
+    "ZIP CRC for all retained members",
+    "generated artifact hash equals retained compiled CUDA source",
+    "numerical gates and changed-input replay",
+    "allocation trace positive CUDA events cross-checked with peak bytes"
+  ],
+  "limitations": [
+    "Inductor ordinary comparisons at H=4096/8192 do not satisfy the matched allocation contract and are excluded.",
+    "CUDA event intervals include single-step submission gaps; timings are not isolated GPU kernel durations.",
+    "CPU metadata records architecture, not processor model.",
+    "No general diagram IR/equality saturation integration, full decoder/token throughput claim, or independent certification."
+  ],
+  "control_receipts": {
+    "summary_validation": "842ae59b332d4556bfd737cbba3ac0b3",
+    "archive_integrity_and_source_audit": "93764eae4c4b4af399a0b5b66c48b04f",
+    "cleanup_readback": "79a1cda796f1417b9082885e4c509118"
+  }
+}
