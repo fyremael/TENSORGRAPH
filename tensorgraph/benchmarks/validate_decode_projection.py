@@ -16,6 +16,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--gpu', choices=['A100', 'L4'], required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--measure', action='store_true')
     args = parser.parse_args()
     out = args.output
     out.mkdir(parents=True, exist_ok=False)
@@ -119,6 +120,9 @@ def main():
                     lane['projection_weight_unchanged']=True
                     lane['passed']=True
                     save()
+                if args.measure:
+                    from tensorgraph.benchmarks.measure_decode_projection import measure_projection
+                    measure_projection(torch,state,x,residual,qweight,out,cell)
                 cell['passed']=True
                 save()
                 print('CELL PASSED',dt,batch,h,flush=True)
