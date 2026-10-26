@@ -1,0 +1,94 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tensorgraph"
+version = "0.6.0.dev0"
+description = "Research compiler for typed diagram IR, equality saturation, and bounded GPU lowering"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Grand Challenge Technologies Ltd."}]
+keywords = ["egraph", "rewriting", "optimization", "string-diagrams", "category-theory", "triton"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Compilers",
+]
+dependencies = [
+    "fastapi>=0.115",
+    "transformers>=4.45",
+    "uvicorn>=0.30",
+]
+
+[project.urls]
+Homepage = "https://github.com/fyremael/TENSORGRAPH"
+Repository = "https://github.com/fyremael/TENSORGRAPH"
+Documentation = "https://github.com/fyremael/TENSORGRAPH/tree/main/docs"
+Issues = "https://github.com/fyremael/TENSORGRAPH/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.4",
+    "mypy>=1.10",
+]
+fx = [
+    "torch>=2.0",
+]
+gpu = [
+    "torch>=2.0",
+    "triton>=3.0; platform_system == 'Linux'",
+]
+
+[project.scripts]
+tensorgraph = "tensorgraph.cli.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tensorgraph*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM"]
+ignore = [
+    "E402",
+    "E501",
+    "E741",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"benchmarks/bench_portability_training.py" = ["E731"]
+"benchmarks/bench_native_cuda_inference.py" = ["B023", "F401", "UP022", "UP035"]
+"scripts/validate_wp03_evidence.py" = ["SIM300"]
+"tensorgraph/codegen/native_cuda.py" = ["SIM114"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-v --tb=short"
+markers = [
+    "gpu: requires CUDA and Triton",
+    "evidence: produces reproducible benchmark evidence",
+]

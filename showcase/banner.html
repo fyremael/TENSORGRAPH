@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280, height=640, initial-scale=1.0">
+    <title>TENSORGRAPH Social Banner Generator</title>
+    <link rel="stylesheet" href="css/chrome-metropolis.css">
+    <style>
+        body {
+            margin: 0;
+            width: 1280px;
+            height: 640px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--c-void);
+            background-image:
+                radial-gradient(circle at 50% 50%, rgba(20, 20, 25, 1) 0%, var(--c-void) 80%),
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
+        }
+
+        .banner-container {
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            width: 100%;
+        }
+
+        .gct-badge {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            letter-spacing: 0.2em;
+            color: var(--c-silver);
+            border: 1px solid var(--c-steel);
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.5);
+            text-transform: uppercase;
+        }
+
+        .build-badge {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            letter-spacing: 0.2em;
+            color: var(--c-success);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--c-success);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--c-success);
+        }
+
+        .title {
+            font-family: var(--font-display);
+            font-size: 120px;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: 0.15em;
+            margin: 0;
+            background: linear-gradient(180deg, #FFFFFF 0%, #A0A0A0 40%, #555555 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .subtitle {
+            font-family: var(--font-heading);
+            font-size: 24px;
+            letter-spacing: 0.4em;
+            color: var(--c-cyan);
+            margin-top: 20px;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+        }
+
+        .tech-line {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: var(--c-silver);
+            margin-top: 40px;
+            letter-spacing: 0.1em;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .tech-item {
+            position: relative;
+        }
+
+        .tech-item:not(:last-child)::after {
+            content: '//';
+            color: var(--c-steel);
+            position: absolute;
+            right: -18px;
+        }
+
+        /* Ambient Graphics */
+        .ring {
+            position: absolute;
+            border: 1px dashed var(--c-steel);
+            border-radius: 50%;
+            opacity: 0.3;
+            z-index: 1;
+        }
+
+        .ring-1 {
+            width: 600px;
+            height: 600px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-color: var(--c-cyan);
+            opacity: 0.1;
+        }
+
+        .ring-2 {
+            width: 900px;
+            height: 900px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: spin 60s linear infinite;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="gct-badge">Grand Challenge Technologies</div>
+    <div class="build-badge">
+        <div class="dot"></div> v0.1.0-alpha
+    </div>
+
+    <div class="ring ring-1"></div>
+    <div class="ring ring-2"></div>
+
+    <div class="banner-container">
+        <h1 class="title">TENSORGRAPH</h1>
+        <div class="subtitle">Diagrammatic Rewriting Compiler</div>
+
+        <div class="tech-line">
+            <span class="tech-item">E-GRAPHS</span>
+            <span class="tech-item">EQUALITY SATURATION</span>
+            <span class="tech-item">CATEGORY THEORY</span>
+            <span class="tech-item">PYTORCH FX</span>
+        </div>
+    </div>
+</body>
+
+</html>

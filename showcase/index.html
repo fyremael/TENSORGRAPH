@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TENSORGRAPH — Diagrammatic Rewriting Compiler</title>
+    <meta name="description"
+        content="A typed diagrammatic rewriting compiler using e-graph equality saturation for program optimization.">
+    <link rel="stylesheet" href="css/chrome-metropolis.css">
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%23050505' width='32' height='32'/><text x='16' y='24' text-anchor='middle' fill='%2300F0FF' font-family='Arial Black' font-size='22' font-weight='bold'>A</text></svg>">
+</head>
+
+<body>
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         INDUSTRIAL HEADER
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <header class="industrial-header">
+        <div class="header-brand">
+            <span class="header-logo">TENSORGRAPH</span>
+            <span class="header-tagline">Diagrammatic Rewriting Compiler</span>
+        </div>
+        <div class="header-status">
+            <nav class="header-nav">
+                <a href="#concepts">Concepts</a>
+                <a href="#demo">Demo</a>
+                <a href="#architecture">Architecture</a>
+                <a href="#docs">Docs</a>
+            </nav>
+            <div class="status-indicator">
+                <span class="status-dot"></span>
+                SYS.STATUS: OPERATIONAL
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         HERO SECTION
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <section class="hero section">
+        <div class="container">
+            <h1 class="hero-title text-chrome">TENSORGRAPH</h1>
+            <p class="hero-subtitle">Transform Programs Through Equality Saturation</p>
+
+            <div class="hero-flow">
+                <div class="flow-node">SOURCE</div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-node active">SATURATE</div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-node">EXTRACT</div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-node">OPTIMAL</div>
+            </div>
+
+            <p style="max-width: 700px; margin: 2rem auto; color: var(--c-silver); font-size: 0.9rem;">
+                Instead of applying transformations one-by-one, TENSORGRAPH explores
+                <strong style="color: var(--c-cyan);">all equivalent programs simultaneously</strong>
+                using an e-graph, then extracts the cheapest one.
+            </p>
+
+            <!-- Hero Visual: E-Graph Illustration -->
+            <div
+                style="margin: 2rem auto; max-width: 600px; border: 1px solid var(--c-steel); padding: 4px; background: var(--c-black);">
+                <img src="assets/egraph_hero.png" alt="E-Graph Visualization"
+                    style="width: 100%; display: block; opacity: 0.9;">
+            </div>
+
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <div class="stat-value">8/8</div>
+                    <div class="stat-label">SPEC.md FR</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">100%</div>
+                    <div class="stat-label">Compliant</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">23</div>
+                    <div class="stat-label">Modules</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">65KB</div>
+                    <div class="stat-label">Documentation</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         CORE CONCEPTS
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <section id="concepts" class="section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">// CORE_CONCEPTS</div>
+                <h2 class="section-title text-chrome">The Mental Model</h2>
+            </div>
+
+            <div class="grid-2">
+                <!-- Objects & Morphisms -->
+                <div class="collapsible open">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this.parentElement)">
+                        <span class="collapsible-arrow">▶</span>
+                        <span class="collapsible-title">Objects & Morphisms</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p style="margin-bottom: 1rem; color: var(--c-silver); font-size: 0.85rem;">
+                            Programs are represented as <strong style="color: var(--c-amber);">typed string
+                                diagrams</strong>:
+                        </p>
+                        <div class="code-block">
+                            <span class="code-comment"># Objects = Types</span>
+                            Tensor = <span class="code-class">Obj</span>(<span class="code-string">"Tensor"</span>)
+
+                            <span class="code-comment"># Morphisms = Typed Processes</span>
+                            <span class="code-function">Id</span>(Tensor) <span class="code-comment"># Identity: T →
+                                T</span>
+                            <span class="code-function">Box</span>(<span class="code-string">"Linear"</span>) <span
+                                class="code-comment"># Primitive op</span>
+                            <span class="code-function">Seq</span>(f, g) <span class="code-comment"># Sequential: f ;
+                                g</span>
+                            <span class="code-function">Par</span>(f, g) <span class="code-comment"># Parallel: f ⊗
+                                g</span>
+                        </div>
+                        <!-- String Diagram Visual -->
+                        <div
+                            style="margin-top: 1rem; border: 1px solid var(--c-steel); padding: 4px; background: var(--c-void);">
+                            <img src="assets/string_diagram.png" alt="String Diagram: f ; g composition"
+                                style="width: 100%; max-width: 280px; display: block; margin: 0 auto; opacity: 0.85;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- E-Graph -->
+                <div class="collapsible open">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this.parentElement)">
+                        <span class="collapsible-arrow">▶</span>
+                        <span class="collapsible-title">The E-Graph</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p style="margin-bottom: 1rem; color: var(--c-silver); font-size: 0.85rem;">
+                            An <strong style="color: var(--c-cyan);">equivalence graph</strong> compactly represents
+                            many equivalent programs:
+                        </p>
+                        <div class="code-block">
+                            ┌─ E-Class 1 ───────────────────────┐
+                            │ • (f ; g) ; h │
+                            │ • f ; (g ; h) <span class="code-comment">[associativity]</span> │
+                            └───────────────────────────────────┘
+                            │
+                            ▼ <span class="code-comment">(references)</span>
+                            ┌─ E-Class 2 ───────────────────────┐
+                            │ • g ; h │
+                            └───────────────────────────────────┘
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rewrite Rules -->
+                <div class="collapsible open">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this.parentElement)">
+                        <span class="collapsible-arrow">▶</span>
+                        <span class="collapsible-title">Rewrite Rules</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p style="margin-bottom: 1rem; color: var(--c-silver); font-size: 0.85rem;">
+                            Define <strong style="color: var(--c-amber);">2-morphisms</strong> as typed equivalences:
+                        </p>
+                        <div class="code-block">
+                            <span class="code-comment"># Pattern-based rewriting</span>
+                            <span class="code-class">Rewrite</span>(
+                            name=<span class="code-string">"FuseOps"</span>,
+                            lhs=<span class="code-function">PSeq</span>(<span class="code-function">PBox</span>(<span
+                                class="code-string">"f"</span>), <span class="code-function">PBox</span>(<span
+                                class="code-string">"f"</span>)),
+                            rhs=<span class="code-function">PBox</span>(<span class="code-string">"f"</span>),
+                            )
+                            <span class="code-comment"># Rule: f ; f ≡ f</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Saturation & Extraction -->
+                <div class="collapsible open">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this.parentElement)">
+                        <span class="collapsible-arrow">▶</span>
+                        <span class="collapsible-title">Saturation & Extraction</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p style="margin-bottom: 1rem; color: var(--c-silver); font-size: 0.85rem;">
+                            <strong style="color: var(--c-success);">Phase 1: Saturate</strong> — Apply all rules until
+                            fixed point.<br>
+                            <strong style="color: var(--c-cyan);">Phase 2: Extract</strong> — Select lowest-cost
+                            program.
+                        </p>
+                        <div class="code-block">
+                            <span class="code-function">saturate</span>(eg, rules, iters=<span
+                                class="code-string">10</span>)
+                            best = <span class="code-class">Extractor</span>(eg).<span
+                                class="code-function">extract</span>(root)
+                        </div>
+                        <!-- Saturation Visual -->
+                        <div
+                            style="margin-top: 1rem; border: 1px solid var(--c-steel); padding: 4px; background: var(--c-void);">
+                            <img src="assets/saturation_visual.png" alt="Saturation to Extraction"
+                                style="width: 100%; max-width: 300px; display: block; margin: 0 auto; opacity: 0.85;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         INTERACTIVE DEMO
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <section id="demo" class="section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">// OPERATOR_CONSOLE</div>
+                <h2 class="section-title text-chrome">Interactive Demo</h2>
+            </div>
+
+            <div class="operator-console">
+                <div class="console-header">
+                    <span class="console-title">TENSORGRAPH Saturation Engine</span>
+                    <span class="console-status">
+                        <span class="status-dot"></span>
+                        [READY]
+                    </span>
+                </div>
+
+                <div class="console-body">
+                    <div class="console-panel">
+                        <div class="panel-label">INPUT PROGRAM</div>
+                        <textarea id="input-expr" class="console-input"
+                            placeholder="Enter expression...">f ; f ; f ; g</textarea>
+
+                        <div class="panel-label" style="margin-top: 1rem;">REWRITE RULES</div>
+                        <div class="rule-list" id="rule-list">
+                            <div class="rule-item active" data-rule="fuse" onclick="toggleRule(this)">
+                                <div class="rule-checkbox">✓</div>
+                                <span class="rule-name">FuseOps</span>
+                                <span class="rule-pattern">f ; f ≡ f</span>
+                            </div>
+                            <div class="rule-item active" data-rule="assoc" onclick="toggleRule(this)">
+                                <div class="rule-checkbox">✓</div>
+                                <span class="rule-name">Assoc</span>
+                                <span class="rule-pattern">(a;b);c ≡ a;(b;c)</span>
+                            </div>
+                            <div class="rule-item" data-rule="identity" onclick="toggleRule(this)">
+                                <div class="rule-checkbox"></div>
+                                <span class="rule-name">Identity</span>
+                                <span class="rule-pattern">id ; f ≡ f</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="console-panel">
+                        <div class="panel-label">OPTIMIZATION TRACE</div>
+                        <div class="trace-terminal" id="trace-output">
+                            <div class="trace-entry">
+                                <span class="trace-index">[SYS]</span>
+                                <span class="trace-detail">Ready. Click SATURATE to begin.</span>
+                            </div>
+                        </div>
+
+                        <div class="panel-label" style="margin-top: 1rem;">OUTPUT</div>
+                        <div class="console-output" id="output-expr">
+                            Optimized expression will appear here...
+                        </div>
+
+                        <div class="metrics-row">
+                            <div class="metric">
+                                <div class="metric-value" id="boxes-before">4</div>
+                                <div class="metric-label">Boxes Before</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value improved" id="boxes-after">—</div>
+                                <div class="metric-label">Boxes After</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value" id="rewrites-applied">0</div>
+                                <div class="metric-label">Rewrites</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value" id="iterations">0</div>
+                                <div class="metric-label">Iterations</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="console-footer">
+                    <button class="btn btn-primary" onclick="runSaturation()">▶ SATURATE</button>
+                    <button class="btn" onclick="resetConsole()">⟳ RESET</button>
+                    <div class="console-param">
+                        <label>iters:</label>
+                        <input type="number" id="param-iters" value="10" min="1" max="100">
+                    </div>
+                    <div class="console-param">
+                        <label>max_applications:</label>
+                        <input type="number" id="param-max" value="1000" min="1" max="10000">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         ARCHITECTURE DIAGRAM
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <section id="architecture" class="section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">// SYSTEM_ARCHITECTURE</div>
+                <h2 class="section-title text-chrome">Data Flow</h2>
+            </div>
+
+            <div class="architecture-diagram">
+                <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Background -->
+                    <rect width="900" height="300" fill="#0a0a0a" />
+
+                    <!-- Flow Arrows -->
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#00F0FF" />
+                        </marker>
+                    </defs>
+
+                    <!-- Stage 1: Source -->
+                    <rect x="20" y="100" width="120" height="100" fill="none" stroke="#333" stroke-width="2" />
+                    <text x="80" y="90" text-anchor="middle" fill="#A0A0A0" font-family="monospace"
+                        font-size="10">INPUT</text>
+                    <text x="80" y="145" text-anchor="middle" fill="#E0E0E0" font-family="'Oswald', sans-serif"
+                        font-size="14">SOURCE</text>
+                    <text x="80" y="165" text-anchor="middle" fill="#A0A0A0" font-family="monospace"
+                        font-size="10">PROGRAM</text>
+
+                    <!-- Arrow 1 -->
+                    <line x1="145" y1="150" x2="185" y2="150" stroke="#00F0FF" stroke-width="2"
+                        marker-end="url(#arrowhead)" />
+
+                    <!-- Stage 2: Parse -->
+                    <rect x="190" y="100" width="120" height="100" fill="none" stroke="#ff9900" stroke-width="2" />
+                    <text x="250" y="90" text-anchor="middle" fill="#ff9900" font-family="monospace"
+                        font-size="10">IR</text>
+                    <text x="250" y="145" text-anchor="middle" fill="#E0E0E0" font-family="'Oswald', sans-serif"
+                        font-size="14">PARSE</text>
+                    <text x="250" y="165" text-anchor="middle" fill="#A0A0A0" font-family="monospace"
+                        font-size="10">Id|Box|Seq|Par</text>
+
+                    <!-- Arrow 2 -->
+                    <line x1="315" y1="150" x2="355" y2="150" stroke="#00F0FF" stroke-width="2"
+                        marker-end="url(#arrowhead)" />
+
+                    <!-- Stage 3: E-Graph -->
+                    <rect x="360" y="80" width="180" height="140" fill="none" stroke="#00F0FF" stroke-width="2" />
+                    <text x="450" y="70" text-anchor="middle" fill="#00F0FF" font-family="monospace"
+                        font-size="10">EQUIVALENCE GRAPH</text>
+                    <text x="450" y="130" text-anchor="middle" fill="#E0E0E0" font-family="'Oswald', sans-serif"
+                        font-size="16">E-GRAPH</text>
+                    <text x="450" y="155" text-anchor="middle" fill="#A0A0A0" font-family="monospace"
+                        font-size="10">Many Programs</text>
+                    <text x="450" y="170" text-anchor="middle" fill="#A0A0A0" font-family="monospace" font-size="10">One
+                        Structure</text>
+
+                    <!-- Saturation Loop -->
+                    <path d="M 450 225 Q 450 260 410 260 Q 370 260 370 225" fill="none" stroke="#00ff66"
+                        stroke-width="2" stroke-dasharray="5,5" />
+                    <text x="450" y="280" text-anchor="middle" fill="#00ff66" font-family="monospace"
+                        font-size="10">SATURATE</text>
+
+                    <!-- Arrow 3 -->
+                    <line x1="545" y1="150" x2="585" y2="150" stroke="#00F0FF" stroke-width="2"
+                        marker-end="url(#arrowhead)" />
+
+                    <!-- Stage 4: Extract -->
+                    <rect x="590" y="100" width="120" height="100" fill="none" stroke="#00ff66" stroke-width="2" />
+                    <text x="650" y="90" text-anchor="middle" fill="#00ff66" font-family="monospace"
+                        font-size="10">COST</text>
+                    <text x="650" y="145" text-anchor="middle" fill="#E0E0E0" font-family="'Oswald', sans-serif"
+                        font-size="14">EXTRACT</text>
+                    <text x="650" y="165" text-anchor="middle" fill="#A0A0A0" font-family="monospace"
+                        font-size="10">min(cost)</text>
+
+                    <!-- Arrow 4 -->
+                    <line x1="715" y1="150" x2="755" y2="150" stroke="#00F0FF" stroke-width="2"
+                        marker-end="url(#arrowhead)" />
+
+                    <!-- Stage 5: Output -->
+                    <rect x="760" y="100" width="120" height="100" fill="none" stroke="#00ff66" stroke-width="2" />
+                    <text x="820" y="90" text-anchor="middle" fill="#00ff66" font-family="monospace"
+                        font-size="10">OUTPUT</text>
+                    <text x="820" y="145" text-anchor="middle" fill="#E0E0E0" font-family="'Oswald', sans-serif"
+                        font-size="14">OPTIMAL</text>
+                    <text x="820" y="165" text-anchor="middle" fill="#A0A0A0" font-family="monospace"
+                        font-size="10">PROGRAM</text>
+
+                    <!-- Module Annotations -->
+                    <text x="80" y="215" text-anchor="middle" fill="#333" font-family="monospace"
+                        font-size="9">backends/</text>
+                    <text x="250" y="215" text-anchor="middle" fill="#333" font-family="monospace"
+                        font-size="9">ir/</text>
+                    <text x="450" y="240" text-anchor="middle" fill="#333" font-family="monospace"
+                        font-size="9">egraph/</text>
+                    <text x="650" y="215" text-anchor="middle" fill="#333" font-family="monospace"
+                        font-size="9">extract.py</text>
+                    <text x="820" y="215" text-anchor="middle" fill="#333" font-family="monospace"
+                        font-size="9">backends/</text>
+                </svg>
+            </div>
+
+            <div class="grid-4" style="margin-top: 2rem;">
+                <div class="cyber-card">
+                    <div class="cyber-card-header">
+                        <div class="cyber-card-badge">T</div>
+                        <span class="cyber-card-title">Types</span>
+                    </div>
+                    <div class="cyber-card-body" style="font-size: 0.8rem; color: var(--c-silver);">
+                        <code>Obj</code>, <code>ObjVar</code>, <code>Sort</code>
+                    </div>
+                </div>
+                <div class="cyber-card">
+                    <div class="cyber-card-header">
+                        <div class="cyber-card-badge">I</div>
+                        <span class="cyber-card-title">IR</span>
+                    </div>
+                    <div class="cyber-card-body" style="font-size: 0.8rem; color: var(--c-silver);">
+                        <code>Id</code>, <code>Box</code>, <code>Seq</code>, <code>Par</code>
+                    </div>
+                </div>
+                <div class="cyber-card">
+                    <div class="cyber-card-header">
+                        <div class="cyber-card-badge">R</div>
+                        <span class="cyber-card-title">Rewrite</span>
+                    </div>
+                    <div class="cyber-card-body" style="font-size: 0.8rem; color: var(--c-silver);">
+                        <code>Pattern</code>, <code>Rewrite</code>, <code>ematch</code>
+                    </div>
+                </div>
+                <div class="cyber-card">
+                    <div class="cyber-card-header">
+                        <div class="cyber-card-badge">E</div>
+                        <span class="cyber-card-title">E-Graph</span>
+                    </div>
+                    <div class="cyber-card-body" style="font-size: 0.8rem; color: var(--c-silver);">
+                        <code>EGraph</code>, <code>saturate</code>, <code>Extractor</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         DOCUMENTATION LINKS
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <section id="docs" class="section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">// DOCUMENTATION</div>
+                <h2 class="section-title text-chrome">Premium Docs</h2>
+            </div>
+
+            <div class="docs-grid">
+                <a href="../docs/CONCEPTS.md" class="doc-card">
+                    <div class="doc-card-icon">💡</div>
+                    <div class="doc-card-title">Concepts</div>
+                    <div class="doc-card-desc">Mental model, intuition pumps, and visual diagrams. Build understanding.
+                    </div>
+                </a>
+                <a href="../docs/TUTORIAL.md" class="doc-card">
+                    <div class="doc-card-icon">🛠️</div>
+                    <div class="doc-card-title">Tutorial</div>
+                    <div class="doc-card-desc">Step-by-step hands-on guide. Build your first optimizer.</div>
+                </a>
+                <a href="../docs/API.md" class="doc-card">
+                    <div class="doc-card-icon">📖</div>
+                    <div class="doc-card-title">API Reference</div>
+                    <div class="doc-card-desc">Complete documentation for every public symbol.</div>
+                </a>
+                <a href="../docs/ARCHITECTURE.md" class="doc-card">
+                    <div class="doc-card-icon">🔧</div>
+                    <div class="doc-card-title">Architecture</div>
+                    <div class="doc-card-desc">Internals deep-dive for contributors.</div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         INDUSTRIAL FOOTER
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <footer class="industrial-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <div class="footer-brand">GRAND CHALLENGE TECHNOLOGIES</div>
+                    <div class="footer-tagline">Frontier Engineering</div>
+                </div>
+                <div class="footer-links">
+                    <a href="#" onclick="openManifesto()">Manifesto</a>
+                    <a href="https://github.com/gct/tensorgraph">GitHub</a>
+                    <a href="../SPEC.md">Specification</a>
+                    <a href="../CONTRIBUTING.md">Contribute</a>
+                    <a href="../LICENSE">MIT License</a>
+                </div>
+                <div class="footer-status">
+                    <span class="status-dot"></span>
+                    ALL SYSTEMS OPERATIONAL
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         MANIFESTO MODAL
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <div id="manifesto-modal" class="modal-overlay" onclick="closeManifesto(event)">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">Frontier Engineering</span>
+                <span class="modal-close" onclick="closeManifesto(event)">×</span>
+            </div>
+            <div class="manifesto-body">
+                <p class="manifesto-intro">We do not write code. We grow systems.</p>
+                <p>
+                    TENSORGRAPH is not just a compiler. It is the crystallization of logic, a machine that optimizes
+                    machines.
+                    In the spirit of <strong style="color: var(--c-cyan)">Grand Challenge Technologies</strong>, we
+                    reject
+                    fragile heuristics in favor of robust, provable mathematical foundations.
+                </p>
+                <p>
+                    Built on the bedrock of Category Theory and E-Graphs, this tool represents our commitment to
+                    <strong style="color: var(--c-chrome)">Industrial Rigor</strong> and <strong
+                        style="color: var(--c-amber)">Technical Authenticity</strong>.
+                </p>
+                <div class="manifesto-signature">
+                    // ENGINEER THE FRONTIER
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         SCRIPTS
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <script src="js/showcase.js"></script>
+</body>
+
+</html>

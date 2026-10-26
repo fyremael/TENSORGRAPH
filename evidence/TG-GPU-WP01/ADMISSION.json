@@ -1,0 +1,87 @@
+{
+  "schema": "tensorgraph.evidence.admission.v1",
+  "package": "TG-GPU-WP01",
+  "status": "complete",
+  "repository": "fyremael/TENSORGRAPH",
+  "evaluated_commit_sha": "92bfa21538e60a4cc321f32f7340ba70eee00db0",
+  "merge_commit_sha": "19fd6760d9b876c34880a79933c3e6914bf8fbf4",
+  "pull_request": 2,
+  "ci": {
+    "workflow_run_id": 30595720737,
+    "conclusion": "success",
+    "python_3_10": "passed",
+    "python_3_13": "passed",
+    "non_cuda_fail_closed_contract": "passed"
+  },
+  "environment": {
+    "gpu_name": "Tesla T4",
+    "gpu_compute_capability": [7, 5],
+    "torch": "2.11.0+cu128",
+    "triton": "3.6.0",
+    "cuda_runtime": "12.8"
+  },
+  "artifacts": {
+    "six_baseline": {
+      "filename": "six_baseline.json",
+      "sha256": "f0b4003f0f1250f4e4430a65897ef1bbbe8a6659f88fca9c74f2273538901c40",
+      "schema": "tensorgraph.evidence.six-baseline-elementwise.v1",
+      "timestamp_utc": "2026-07-31T01:40:58.464990+00:00",
+      "workloads": 8,
+      "numerical_gates": 48,
+      "numerical_status": "all_passed_exact",
+      "tensorgraph_direct_triton_median_ratio_min": 0.9937,
+      "tensorgraph_direct_triton_median_ratio_max": 1.0242
+    },
+    "sigmoid": {
+      "filename": "sigmoid.json",
+      "sha256": "e7fb0f2e7050e050d34857ee57b8547c306592625e4244b20ae4378531dd155a",
+      "generated_source_sha256": "d39a14b53fe10ee1e02adf00861ff0069778fcf553f5e120974882572c30256a",
+      "schema": "tensorgraph.evidence.verified-elementwise.v2",
+      "timestamp_utc": "2026-07-31T01:52:10.978135+00:00",
+      "workloads": 4,
+      "maximum_absolute_error": 1.7881393432617188e-07,
+      "speedup_over_eager_min": 1.1715599397226442,
+      "speedup_over_eager_max": 2.678100006850995,
+      "numerical_status": "all_passed"
+    },
+    "tanh": {
+      "filename": "tanh.json",
+      "sha256": "e9568d902d1dfd12e6816f28527c8a011e4c4e9e4ae14623a19b47cad9de5361",
+      "generated_source_sha256": "1b3b8c50dcb1766edb9d043faf8372c06d444b06ed3ef108fabf6edf509555b2",
+      "schema": "tensorgraph.evidence.verified-elementwise.v2",
+      "timestamp_utc": "2026-07-31T01:52:23.052264+00:00",
+      "workloads": 4,
+      "maximum_absolute_error": 2.384185791015625e-07,
+      "maximum_relative_error": 0.006059942301362753,
+      "speedup_over_eager_min": 0.997078411962771,
+      "speedup_over_eager_max": 2.2321968486331594,
+      "numerical_status": "all_passed"
+    },
+    "nonlinear_bundle": {
+      "filename": "tg-gpu-wp01-evidence.zip",
+      "sha256": "a62b75014f08207d4f60b2c20be4f340f747599e45a1bc286d1564c00ca593c8",
+      "contains": ["sigmoid.json", "tanh.json", "SHA256SUMS"]
+    }
+  },
+  "admission": {
+    "sigmoid_gpu_evidence": "admitted",
+    "tanh_gpu_evidence": "admitted",
+    "six_baseline_gpu_evidence": "admitted",
+    "portable_lowering_contains": "tl.exp",
+    "portable_lowering_excludes": "tl.sigmoid"
+  },
+  "provenance": {
+    "six_baseline_pr_comment_id": 5138247664,
+    "nonlinear_pr_comment_id": 5138344591
+  },
+  "claim_boundary": {
+    "validated": "Forward-only CUDA execution of the recorded bounded unary graphs and six-lane comparison on the recorded Tesla T4 software environment.",
+    "not_validated": [
+      "general FX compilation",
+      "backward or training correctness",
+      "performance portability",
+      "distributed production execution",
+      "production readiness"
+    ]
+  }
+}
